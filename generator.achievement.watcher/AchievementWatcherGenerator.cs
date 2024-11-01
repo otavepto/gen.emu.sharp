@@ -27,7 +27,7 @@ public class AchievementWatcherGenerator : IGenerator
 
   public Task Setup(string basepath)
   {
-    baseFolder = Path.Combine(basepath, "Achievement Watcher");
+    baseFolder = Path.Combine(basepath, "Achievement Watcher", "steam_cache", "schema");
 
     return Task.CompletedTask;
   }
@@ -41,7 +41,6 @@ public class AchievementWatcherGenerator : IGenerator
     }
 
     this.appInfoModel = appInfoModel;
-    baseFolder = Path.Combine(baseFolder, appInfoModel.AppId.ToString(CultureInfo.InvariantCulture), "steam_cache", "schema");
 
     FindAppExe();
     ParseSupportedLangs();

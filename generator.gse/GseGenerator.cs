@@ -29,15 +29,6 @@ public class GseGenerator : IGenerator
 
   string baseFolder = string.Empty;
 
-  string mediaFolder = string.Empty;
-  string iconsFolder = string.Empty;
-  string commonImagesFolder = string.Empty;
-  string screenshotsFolder = string.Empty;
-  string screenshotsThumbnailsFolder = string.Empty;
-  string promoVidFolder = string.Empty;
-  string inventoryImagesFolder = string.Empty;
-  string inventoryImagesLargeFolder = string.Empty;
-
   string extraInfoFolder = string.Empty;
 
   string settingsFolder = string.Empty;
@@ -63,15 +54,6 @@ public class GseGenerator : IGenerator
     baseFolder = Path.Combine(basepath, "gse");
     appInfoModel = null!;
 
-    mediaFolder = string.Empty;
-    iconsFolder = string.Empty;
-    commonImagesFolder = string.Empty;
-    screenshotsFolder = string.Empty;
-    screenshotsThumbnailsFolder = string.Empty;
-    promoVidFolder = string.Empty;
-    inventoryImagesFolder = string.Empty;
-    inventoryImagesLargeFolder = string.Empty;
-
     extraInfoFolder = string.Empty;
 
     settingsFolder = string.Empty;
@@ -91,32 +73,21 @@ public class GseGenerator : IGenerator
   public async Task Generate(AppInfoModel appInfoModel)
   {
     this.appInfoModel = appInfoModel;
-    var appBaseFolder = Path.Combine(baseFolder, $"{appInfoModel.Product.NameOnDisk}-{appInfoModel.AppId}");
 
-    mediaFolder = Path.Combine(appBaseFolder, "media_assets");
-    iconsFolder = Path.Combine(mediaFolder, "icons");
-    commonImagesFolder = Path.Combine(mediaFolder, "backgrounds");
-    screenshotsFolder = Path.Combine(mediaFolder, "screenshots");
-    screenshotsThumbnailsFolder = Path.Combine(screenshotsFolder, "thumbnails");
-    promoVidFolder = Path.Combine(mediaFolder, "promo_video");
-    inventoryImagesFolder = Path.Combine(mediaFolder, "inventory_images");
-    inventoryImagesLargeFolder = Path.Combine(inventoryImagesFolder, "large");
+    extraInfoFolder = Path.Combine(baseFolder, "extra_info");
 
-    extraInfoFolder = Path.Combine(appBaseFolder, "extra_info");
-
-    settingsFolder = Path.Combine(appBaseFolder, "steam_settings");
+    settingsFolder = Path.Combine(baseFolder, "steam_settings");
     controllerFolder = Path.Combine(settingsFolder, "controller");
     modsFolder = Path.Combine(settingsFolder, "mods");
     modsImagesFolder = Path.Combine(settingsFolder, "mod_images");
     achievementsImagesFolder = Path.Combine(settingsFolder, ACHIEVEMENT_IMAGE_FOLDER_NAME);
     achievementsImagesLockedFolder = Path.Combine(achievementsImagesFolder, ACHIEVEMENT_IMAGE_LOCKED_FOLDER_NAME);
 
-    Directory.CreateDirectory(appBaseFolder);
+    Directory.CreateDirectory(baseFolder);
 
     SaveAppid();
-    var mediaTask = SaveMedia();
     var invTask = SaveAchievements();
-    var achTask = SaveInventory();
+    SaveInventory();
     SaveExtraInfo();
     SaveDepots();
     SaveSupportedLanguages();
@@ -125,7 +96,7 @@ public class GseGenerator : IGenerator
     SaveStats();
     SaveController();
 
-    await Task.WhenAll(mediaTask, invTask, achTask).ConfigureAwait(false);
+    await Task.WhenAll(invTask).ConfigureAwait(false);
     
   }
 
@@ -143,69 +114,6 @@ public class GseGenerator : IGenerator
     File.WriteAllText(Path.Combine(settingsFolder, "steam_appid.txt"),
       appInfoModel.AppId.ToString(CultureInfo.InvariantCulture),
     Utils.Utf8EncodingNoBom);
-  }
-
-  async Task SaveMedia()
-  {
-    var icons = appInfoModel.MediaAssets.Icons
-      .Where(sc => sc.Data.Count > 0 && sc.NameOnDisk.Length > 0);
-    
-    var imgs = appInfoModel.MediaAssets.CommonImages
-      .Where(sc => sc.Data.Count > 0 && sc.NameOnDisk.Length > 0);
-    
-    var scrn = appInfoModel.MediaAssets.Screenshots
-      .Where(sc => sc.Data.Count > 0 && sc.NameOnDisk.Length > 0);
-
-    var thumbs = appInfoModel.MediaAssets.ScreenshotsThumbnails
-      .Where(sc => sc.Data.Count > 0 && sc.NameOnDisk.Length > 0);
-
-    var assetsPack = new[] { icons, imgs, scrn, thumbs }
-      .Zip([ iconsFolder, commonImagesFolder, screenshotsFolder, screenshotsThumbnailsFolder ]);
-
-    foreach (var (assetCollection, assetFolder) in assetsPack)
-    {
-      if (assetCollection.Any())
-      {
-        Directory.CreateDirectory(assetFolder);
-      }
-    }
-
-    {
-      bool gotVid = appInfoModel.MediaAssets.Video is not null
-        && appInfoModel.MediaAssets.Video.Data.Count > 0
-        && appInfoModel.MediaAssets.Video.NameOnDisk.Length > 0;
-
-      if (gotVid)
-      {
-        Directory.CreateDirectory(promoVidFolder);
-      }
-    }
-
-    static async Task WriteAssetAsync(string basePath, MediaAssetItemModel? assetItem, CancellationToken ct)
-    {
-      if (assetItem is null)
-      {
-        return;
-      }
-
-      var filepath = Path.Combine(basePath, assetItem.NameOnDisk);
-      await File.WriteAllBytesAsync(filepath, [.. assetItem.Data], ct).ConfigureAwait(false);
-    }
-
-    List<Task> tasks = [];
-    foreach (var (assetCollection, assetFolder) in assetsPack)
-    {
-      var task = Utils.ParallelJobsAsync(assetCollection, async (assetItem, _, _, ct) =>
-      {
-        await WriteAssetAsync(assetFolder, assetItem, ct).ConfigureAwait(false);
-      }, 4, 5);
-      tasks.Add(task);
-    }
-
-    tasks.Add(WriteAssetAsync(promoVidFolder, appInfoModel.MediaAssets.Video, default));
-
-    await Task.WhenAll(tasks).ConfigureAwait(false);
-
   }
 
   void SaveExtraInfo()
@@ -829,11 +737,11 @@ public class GseGenerator : IGenerator
 
   }
 
-  Task SaveInventory()
+  void SaveInventory()
   {
     if (appInfoModel.InventoryItems.OriginalSchema.Count == 0)
     {
-      return Task.CompletedTask;
+      return;
     }
 
     JsonObject invItems = new();
@@ -884,45 +792,6 @@ public class GseGenerator : IGenerator
     Directory.CreateDirectory(settingsFolder);
     Utils.WriteJson(invItems, Path.Combine(settingsFolder, "items.json"));
     Utils.WriteJson(defaultInvItems, Path.Combine(settingsFolder, "default_items.json"));
-
-    Task iconTask = Task.CompletedTask;
-    Task iconLargeTask = Task.CompletedTask;
-
-    var icons = appInfoModel.InventoryItems.Icons.Select(ico => ico.Icon);
-    if (icons.Any(ico => ico.Data.Count > 0))
-    {
-      Directory.CreateDirectory(inventoryImagesFolder);
-      iconTask = Utils.ParallelJobsAsync(icons, async (item, _, _, ct) =>
-      {
-        if (item.Data.Count == 0)
-        {
-          return;
-        }
-
-        var filepath = Path.Combine(inventoryImagesFolder, item.NameOnDisk);
-        await File.WriteAllBytesAsync(filepath, [.. item.Data], ct).ConfigureAwait(false);
-      }, 30, 5);
-
-    }
-
-    var iconsLarge = appInfoModel.InventoryItems.Icons.Select(ico => ico.IconLarge);
-    if (iconsLarge.Any(ico => ico.Data.Count > 0))
-    {
-      Directory.CreateDirectory(inventoryImagesLargeFolder);
-      iconLargeTask = Utils.ParallelJobsAsync(iconsLarge, async (item, _, _, ct) =>
-      {
-        if (item.Data.Count == 0)
-        {
-          return;
-        }
-
-        var filepath = Path.Combine(inventoryImagesLargeFolder, item.NameOnDisk);
-        await File.WriteAllBytesAsync(filepath, [.. item.Data], ct).ConfigureAwait(false);
-      }, 30, 5);
-
-    }
-
-    return Task.WhenAll(iconTask, iconLargeTask);
   }
 
   Task SaveAchievements()

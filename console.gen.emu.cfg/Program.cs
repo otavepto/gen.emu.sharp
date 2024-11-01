@@ -12,6 +12,7 @@ using gen.emu.types.Generators;
 using generator.gse;
 using gen.emu.types.Models.MediaAssets;
 using generator.achievement.watcher;
+using generator.media.assets;
 
 
 const string BACKUPS_FOLDER_NAME = "backup";
@@ -54,6 +55,7 @@ var backupFolder = Path.Combine(baseFolder, BACKUPS_FOLDER_NAME);
 IGenerator[] generators = [
   new AchievementWatcherGenerator(),
   new GseGenerator(),
+  new MediaAssetsGenerator(),
 ];
 
 foreach (var appid in ToolArgs.Instance.GetAppIds)
@@ -115,7 +117,7 @@ foreach (var appid in ToolArgs.Instance.GetAppIds)
   }
 
   // TODO EXTRA ARGS
-  await GeneratorsRunner.Instance.RunForAppAsync(appModel, Path.Combine(baseFolder, "generated"), [], generators).ConfigureAwait(false);
+  await GeneratorsRunner.Instance.RunForAppAsync(appModel, Path.Combine(baseFolder, "generated", $"{appModel.Product.NameOnDisk}-{appModel.AppId}"), [], generators).ConfigureAwait(false);
 
   Log.Instance.EndSteps(lglvapp, $"done");
 }

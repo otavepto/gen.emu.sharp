@@ -17,6 +17,7 @@
     <ProjectReference Include="..\gen.emu.cfg\gen.emu.cfg.csproj" />
     <ProjectReference Include="..\generator.achievement.watcher\generator.achievement.watcher.csproj" />
     <ProjectReference Include="..\generator.gse\generator.gse.csproj" />
+    <ProjectReference Include="..\generator.media.assets\generator.media.assets.csproj" />
   </ItemGroup>
 
 </Project>
