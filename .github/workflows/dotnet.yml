@@ -1,0 +1,64 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  workflow_dispatch:
+  push:
+    tags:        
+      - release-*
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish Linux x64
+      run: dotnet publish /p:PublishProfile=linux-x64.pubxml
+    
+    - name: Archive Linux x64
+      run: tar -czf gen.emu.sharp-linux.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" linux-x64/
+
+    - name: Upload Linux x64
+      uses: actions/upload-artifact@v4
+      with:
+        name: "gen.emu.sharp-linux.x64-${{ github.sha }}"
+        path: gen.emu.sharp-linux.x64.tar.gz
+        if-no-files-found: 'error'
+        compression-level: 0
+
+    - name: Publish Windows x64
+      run: dotnet publish /p:PublishProfile=win-x64.pubxml
+
+    - name: Archive Windows x64
+      run: tar -czf gen.emu.sharp-win.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" win-x64/
+
+    - name: Upload Windows x64
+      uses: actions/upload-artifact@v4
+      with:
+        name: "gen.emu.sharp-win.x64-${{ github.sha }}"
+        path: gen.emu.sharp-win.x64.tar.gz
+        if-no-files-found: 'error'
+        compression-level: 9
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          gen.emu.sharp-linux.x64.tar.gz
+          gen.emu.sharp-win.x64.tar.gz
+
