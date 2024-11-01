@@ -13,6 +13,11 @@ A rewrite of the [generate_emu_config](https://gitlab.com/Mr_Goldberg/goldberg_e
 console.gen.emu.cfg 420 730 227300 -v --icons --imgs --scrn --thumbs --vid --invicons --inviconslarge
 ```
 
+## Help page
+```shell
+console.gen.emu.cfg --help
+```
+
 ## Third-party credits
 * [SteamKit2](https://github.com/SteamRE/SteamKit)
 * [ValveKeyValue](https://github.com/ValveResourceFormat/ValveKeyValue)
