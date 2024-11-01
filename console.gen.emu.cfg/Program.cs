@@ -48,6 +48,8 @@ if (!ToolArgs.Instance.GetOptions.IsOfflineMode)
   await OnlineLoginAsync().ConfigureAwait(false);
 }
 
+TopOwners.Instance.Init(baseFolder);
+
 var backupFolder = Path.Combine(baseFolder, BACKUPS_FOLDER_NAME);
 IGenerator[] generators = [
   new AchievementWatcherGenerator(),
@@ -140,8 +142,6 @@ async Task OnlineLoginAsync()
   var res = await Auth.Instance.LoginAsync(ToolArgs.Instance.GetOptions.Username, ToolArgs.Instance.GetOptions.Password, ToolArgs.Instance.GetOptions.AnonLogin).ConfigureAwait(false);
 
   Log.Instance.Write(Log.Kind.Info, "Connected!");
-
-  TopOwners.Instance.Init(baseFolder);
 
 }
 

@@ -1,4 +1,5 @@
 ﻿using common.utils;
+using common.utils.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -65,6 +66,11 @@ public class TopOwners
           ownersIds.Add(id_num);
         }
       }
+      Log.Instance.Write(Log.Kind.Info, $"Parsed {ids.Length} owners IDs from file '{topOwnersFilepath}'");
+    }
+    else
+    {
+      Log.Instance.Write(Log.Kind.Warning, $"Top owners file '{topOwnersFilepath}' wasn't found");
     }
   }
 
