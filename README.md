@@ -8,6 +8,11 @@ A rewrite of the [generate_emu_config](https://gitlab.com/Mr_Goldberg/goldberg_e
 * Extend built-in owners IDs by adding them to a file called `top_owners_ids.txt`, each ID on a separate line
 * Download various media assets for each app: backgrounds, icons, screenshots, inventory items images, ...
 
+## Example
+```shell
+console.gen.emu.cfg 420 730 227300 -v --icons --imgs --scrn --thumbs --vid --invicons --inviconslarge
+```
+
 ## Third-party credits
 * [SteamKit2](https://github.com/SteamRE/SteamKit)
 * [ValveKeyValue](https://github.com/ValveResourceFormat/ValveKeyValue)
