@@ -117,7 +117,7 @@ foreach (var appid in ToolArgs.Instance.GetAppIds)
   }
 
   // TODO EXTRA ARGS
-  await GeneratorsRunner.Instance.RunForAppAsync(appModel, Path.Combine(baseFolder, "generated", $"{appModel.Product.NameOnDisk}-{appModel.AppId}"), [], generators).ConfigureAwait(false);
+  await GeneratorsRunner.Instance.RunForAppAsync(appModel, Path.Combine(baseFolder, "generated", $"{appModel.Product.NameOnDisk}-{appModel.AppId}"), args, generators).ConfigureAwait(false);
 
   Log.Instance.EndSteps(lglvapp, $"done");
 }

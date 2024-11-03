@@ -1,9 +1,9 @@
-﻿using common.utils;
+﻿using CommandLine;
+using common.utils;
 using common.utils.Logging;
 using gen.emu.shared;
 using gen.emu.types.Generators;
 using gen.emu.types.Models;
-using gen.emu.types.Models.MediaAssets;
 using gen.emu.types.Models.StatsAndAchievements;
 using System;
 using System.Collections.Generic;
@@ -16,6 +16,16 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace generator.gse;
+
+
+// https://github.com/commandlineparser/commandline
+public class Options
+{
+  [Option("nonet", Default = false, Required = false,
+    HelpText = "disable networking (this won't prevent games from making external web requests)")]
+  public bool DisableNetworking { get; private set; }
+
+}
 
 public class GseGenerator : IGenerator
 {
@@ -41,9 +51,20 @@ public class GseGenerator : IGenerator
   List<string> supportedLangs = [];
 
   readonly IniManager iniFiles = new();
-  
+
+  Options options = new Options();
+
   public Task ParseArgs(IEnumerable<string> args)
   {
+    var parser = new Parser(settings =>
+    {
+      settings.IgnoreUnknownArguments = true;
+      settings.ParsingCulture = CultureInfo.InvariantCulture;
+    });
+    parser
+      .ParseArguments<Options>(args)
+      .WithParsed(opt => options = opt)
+      ;
     // TODO
     return Task.CompletedTask;
     throw new NotImplementedException();
@@ -52,21 +73,6 @@ public class GseGenerator : IGenerator
   public Task Setup(string basepath)
   {
     baseFolder = Path.Combine(basepath, "gse");
-    appInfoModel = null!;
-
-    extraInfoFolder = string.Empty;
-
-    settingsFolder = string.Empty;
-    controllerFolder = string.Empty;
-    modsFolder = string.Empty;
-    modsImagesFolder = string.Empty;
-    achievementsImagesFolder = string.Empty;
-    achievementsImagesLockedFolder = string.Empty;
-
-    supportedLangs.Clear();
-
-    iniFiles.Clear();
-
     return Task.CompletedTask;
   }
 
@@ -95,15 +101,44 @@ public class GseGenerator : IGenerator
     SaveDlcs();
     SaveStats();
     SaveController();
+    DisableExtraFeatures();
 
-    await Task.WhenAll(invTask).ConfigureAwait(false);
+    await invTask.ConfigureAwait(false);
     
+  }
+
+  private void DisableExtraFeatures()
+  {
+    if (options.DisableNetworking)
+    {
+      var mainConn = iniFiles.GetSection("configs.main.ini", "main::connectivity");
+      mainConn["disable_networking"] = ("1", "disable all steam networking interface functionality");
+      mainConn["disable_sharing_stats_with_gameserver"] = ("1", "prevent sharing stats and achievements with any game server, this also disables the interface ISteamGameServerStats");
+      mainConn["disable_source_query"] = ("1", "do not send server details to the server browser, only works for game servers");
+    }
+
   }
 
   public Task Cleanup()
   {
     Directory.CreateDirectory(settingsFolder);
     iniFiles.WriteAllFiles(settingsFolder);
+
+    appInfoModel = null!;
+
+    extraInfoFolder = string.Empty;
+
+    settingsFolder = string.Empty;
+    controllerFolder = string.Empty;
+    modsFolder = string.Empty;
+    modsImagesFolder = string.Empty;
+    achievementsImagesFolder = string.Empty;
+    achievementsImagesLockedFolder = string.Empty;
+
+    supportedLangs.Clear();
+
+    iniFiles.Clear();
+
     return Task.CompletedTask;
   }
 

@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using CommandLine.Text;
 using System.Globalization;
 
 namespace console.gen.emu.cfg;
@@ -122,6 +123,26 @@ public class ToolArgs
       HelpText = "don't output colored logs in the console")]
     public bool NoColoredConsoleLog { get; private set; }
 
+
+
+    [Usage]
+    public static IEnumerable<Example> Examples
+    {
+      get
+      {
+        yield return new Example("Grab everything", new Options
+        {
+          VerboseLogging = true,
+          DownloadIcons = true,
+          DownloadCommonImages = true,
+          DownloadScreenshots = true,
+          DownloadScreenshotsThumbnails = true,
+          DownloadVideo = true,
+          DownloadInventoryIcons = true,
+          DownloadInventoryLargeIcons = true,
+        });
+      }
+    }
   }
 
 
@@ -130,9 +151,6 @@ public class ToolArgs
 
   readonly List<uint> appids = [];
   public IReadOnlyList<uint> GetAppIds => appids;
-
-  readonly List<string> unknownArgs = [];
-  public IReadOnlyList<string> GetUnknownArgs => unknownArgs;
 
   public bool HelpOrVersion {  get; private set; }
 
@@ -162,15 +180,15 @@ public class ToolArgs
           case ErrorType.UnknownOptionError:
             {
               var err = (UnknownOptionError)error;
-              if (!err.Token.Equals("help", StringComparison.OrdinalIgnoreCase)
-                  && !err.Token.Equals("version", StringComparison.OrdinalIgnoreCase)
+              if (err.Token.Equals("help", StringComparison.OrdinalIgnoreCase)
+                  || err.Token.Equals("version", StringComparison.OrdinalIgnoreCase)
                  )
               {
-                unknownArgs.Add(err.Token);
+                HelpOrVersion = true;
               }
               else
               {
-                HelpOrVersion = true;
+                throw new ArgumentException($"Invalid argument <Type: {error.Tag} - {error.GetType()}>: '{error}'");
               }
             }
             break;
@@ -179,16 +197,18 @@ public class ToolArgs
           case ErrorType.VersionRequestedError:
             HelpOrVersion = true;
             break;
-          case ErrorType.RepeatedOptionError:
-          case ErrorType.SetValueExceptionError:
-            break;
           default:
             throw new ArgumentException($"Invalid argument <Type: {error.Tag} - {error.GetType()}>: '{error}'");
         }
       }
     }
 
-    Parser.Default
+    var parser = new Parser(settings =>
+    {
+      settings.IgnoreUnknownArguments = true;
+      settings.ParsingCulture = CultureInfo.InvariantCulture;
+    });
+    parser
       .ParseArguments<Options>(strings)
       .WithParsed(opt => options = opt)
       .WithNotParsed(OnError)

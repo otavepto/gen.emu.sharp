@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\gen.emu.shared\gen.emu.shared.csproj" />
     <ProjectReference Include="..\gen.emu.types\gen.emu.types.csproj" />
   </ItemGroup>
