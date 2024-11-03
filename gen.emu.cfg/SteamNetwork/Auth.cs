@@ -45,7 +45,7 @@ public class Auth
   TimeSpan reconnectDelay;
   int loginAttempts;
 
-  SteamUser steamUser;
+  SteamUser steamUser = default!;
 
   string? username;
   string? password;
@@ -149,7 +149,7 @@ public class Auth
 
     loginAttempts = 0;
 
-    steamUser = null;
+    steamUser = null!;
 
     username = null;
     password = null;

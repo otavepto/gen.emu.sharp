@@ -23,8 +23,8 @@ public class Client
   string servers_base_dir = SERVERS_FOLDER_NAME;
   string cellIdFilepath = CELLID_FILENAME;
 
-  SteamClient steamClient;
-  CallbackManager callbackManager;
+  SteamClient steamClient = default!;
+  CallbackManager callbackManager = default!;
   uint cellid;
   bool loaded;
 
