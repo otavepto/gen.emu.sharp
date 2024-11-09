@@ -419,7 +419,7 @@ public static class Utils
     return decompressedStream.ToArray();
   }
 
-  public static void WriteJson<T>(T? obj, string filepath)
+  public static void WriteJson<T>(T? obj, string filepath, bool asciiEscaping = false)
   {
     if (obj is null)
     {
@@ -437,12 +437,12 @@ public static class Utils
     using var utf8js = new Utf8JsonWriter(fs, new JsonWriterOptions
     {
       Indented = true,
-      Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+      Encoder = asciiEscaping ? JavaScriptEncoder.Default : JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     });
     JsonSerializer.Serialize(utf8js, obj, new JsonSerializerOptions
     {
       WriteIndented = true,
-      Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+      Encoder = asciiEscaping ? JavaScriptEncoder.Default : JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
       DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
       NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals,
     });
