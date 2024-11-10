@@ -24,6 +24,6 @@ console.gen.emu.cfg --help
 ```
 
 ## Third-party credits
-* [SteamKit2](https://github.com/SteamRE/SteamKit)
+* [SteamKit](https://github.com/SteamRE/SteamKit)
 * [ValveKeyValue](https://github.com/ValveResourceFormat/ValveKeyValue)
 * [CommandLineParser](https://github.com/commandlineparser/commandline)
