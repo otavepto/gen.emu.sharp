@@ -9,6 +9,10 @@ namespace gen.emu.types.Generators;
 
 public interface IGenerator
 {
+  string GenerateVersion();
+  
+  string GenerateHelpPage();
+
   Task ParseArgs(IEnumerable<string> args);
   
   Task Setup(string basepath);

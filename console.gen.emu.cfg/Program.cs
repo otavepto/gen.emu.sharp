@@ -17,10 +17,40 @@ using generator.media.assets;
 
 const string BACKUPS_FOLDER_NAME = "backup";
 
+IGenerator[] generators = [
+  new GseGenerator(),
+  new AchievementWatcherGenerator(),
+  new MediaAssetsGenerator(),
+];
+
 ToolArgs.Instance.ParseCmdline(args);
 
-if (ToolArgs.Instance.HelpOrVersion)
+if (!string.IsNullOrEmpty(ToolArgs.Instance.HelpText))
 {
+  Log.Instance.Write(Log.Kind.Info, $"//////// General help ////////\n" + ToolArgs.Instance.HelpText);
+
+  var helpPages = generators
+    .Select(g => (Name: g.GetType().Name, Help: g.GenerateHelpPage()))
+    .Where(gg => !string.IsNullOrEmpty(gg.Help));
+  foreach (var (Name, Help) in helpPages)
+  {
+    Log.Instance.Write(Log.Kind.Info, $"//////// Generator <{Name}> help ////////\n" + Help);
+  }
+
+  return;
+}
+else if (!string.IsNullOrEmpty(ToolArgs.Instance.VersionText))
+{
+  Log.Instance.Write(Log.Kind.Info, $"//////// General version ////////\n" + ToolArgs.Instance.VersionText);
+
+  var helpPages = generators
+    .Select(g => (Name: g.GetType().Name, Version: g.GenerateVersion()))
+    .Where(gg => !string.IsNullOrEmpty(gg.Version));
+  foreach (var (Name, Version) in helpPages)
+  {
+    Log.Instance.Write(Log.Kind.Info, $"//////// Generator <{Name}> version ////////\n" + Version);
+  }
+
   return;
 }
 
@@ -52,11 +82,6 @@ if (!ToolArgs.Instance.GetOptions.IsOfflineMode)
 TopOwners.Instance.Init(baseFolder);
 
 var backupFolder = Path.Combine(baseFolder, BACKUPS_FOLDER_NAME);
-IGenerator[] generators = [
-  new AchievementWatcherGenerator(),
-  new GseGenerator(),
-  new MediaAssetsGenerator(),
-];
 
 foreach (var appid in ToolArgs.Instance.GetAppIds)
 {

@@ -1,6 +1,9 @@
 ﻿using CommandLine;
 using CommandLine.Text;
+using common.utils;
+using common.utils.Logging;
 using System.Globalization;
+using System.Text;
 
 namespace console.gen.emu.cfg;
 
@@ -130,7 +133,7 @@ public class ToolArgs
     {
       get
       {
-        yield return new Example("Grab everything", new Options
+        yield return new Example("Example: grab everything", new Options
         {
           VerboseLogging = true,
           DownloadIcons = true,
@@ -152,7 +155,9 @@ public class ToolArgs
   readonly List<uint> appids = [];
   public IReadOnlyList<uint> GetAppIds => appids;
 
-  public bool HelpOrVersion {  get; private set; }
+  public string HelpText { get; private set; } = string.Empty;
+
+  public string VersionText { get; private set; } = string.Empty;
 
   public void ParseCmdline(IEnumerable<string> args)
   {
@@ -171,6 +176,8 @@ public class ToolArgs
       }
     }
 
+    using var helpOrVerWriter = new StringWriter();
+
     void OnError(IEnumerable<Error> errors)
     {
       foreach (var error in errors)
@@ -180,11 +187,13 @@ public class ToolArgs
           case ErrorType.UnknownOptionError:
             {
               var err = (UnknownOptionError)error;
-              if (err.Token.Equals("help", StringComparison.OrdinalIgnoreCase)
-                  || err.Token.Equals("version", StringComparison.OrdinalIgnoreCase)
-                 )
+              if (err.Token.Equals("help", StringComparison.OrdinalIgnoreCase))
               {
-                HelpOrVersion = true;
+                HelpText = helpOrVerWriter.ToString();
+              }
+              else if (err.Token.Equals("version", StringComparison.OrdinalIgnoreCase))
+              {
+                VersionText = helpOrVerWriter.ToString();
               }
               else
               {
@@ -194,8 +203,10 @@ public class ToolArgs
             break;
           case ErrorType.HelpRequestedError:
           case ErrorType.HelpVerbRequestedError:
+            HelpText = helpOrVerWriter.ToString();
+            break;
           case ErrorType.VersionRequestedError:
-            HelpOrVersion = true;
+            VersionText = helpOrVerWriter.ToString();
             break;
           default:
             throw new ArgumentException($"Invalid argument <Type: {error.Tag} - {error.GetType()}>: '{error}'");
@@ -207,6 +218,9 @@ public class ToolArgs
     {
       settings.IgnoreUnknownArguments = true;
       settings.ParsingCulture = CultureInfo.InvariantCulture;
+      settings.AutoHelp = true;
+      settings.HelpWriter = helpOrVerWriter;
+      settings.AutoVersion = true;
     });
     parser
       .ParseArguments<Options>(strings)

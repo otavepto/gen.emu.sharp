@@ -37,6 +37,16 @@ public class MediaAssetsGenerator : IGenerator
   string achievementsIconsUnlockedFolder = string.Empty;
   string achievementsIconsLockedFolder = string.Empty;
 
+  public string GenerateVersion()
+  {
+    return typeof(MediaAssetsGenerator).Assembly?.GetName()?.Version?.ToString() ?? string.Empty;
+  }
+
+  public string GenerateHelpPage()
+  {
+    return string.Empty;
+  }
+
   public Task ParseArgs(IEnumerable<string> args)
   {
     // TODO

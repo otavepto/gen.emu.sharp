@@ -5,6 +5,7 @@ using gen.emu.shared;
 using gen.emu.types.Generators;
 using gen.emu.types.Models;
 using gen.emu.types.Models.StatsAndAchievements;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,17 +19,17 @@ using System.Threading.Tasks;
 namespace generator.gse;
 
 
-// https://github.com/commandlineparser/commandline
-public class Options
-{
-  [Option("nonet", Default = false, Required = false,
-    HelpText = "disable networking (this won't prevent games from making external web requests)")]
-  public bool DisableNetworking { get; private set; }
-
-}
-
 public class GseGenerator : IGenerator
 {
+  // https://github.com/commandlineparser/commandline
+  public class Options
+  {
+    [Option("nonet", Default = false, Required = false,
+      HelpText = "disable networking (this won't prevent games from making external web requests)")]
+    public bool DisableNetworking { get; private set; }
+
+  }
+
   const string ACHIEVEMENT_IMAGE_FOLDER_NAME = "ach_images";
   const string ACHIEVEMENT_IMAGE_LOCKED_FOLDER_NAME = "locked";
 
@@ -52,7 +53,27 @@ public class GseGenerator : IGenerator
 
   readonly IniManager iniFiles = new();
 
-  Options options = new Options();
+  Options options = new();
+
+  public string GenerateVersion()
+  {
+    using var stwr = new StringWriter();
+
+    var parser = new Parser(settings => settings.HelpWriter = stwr);
+    parser.ParseArguments<Options>(["--version"]);
+
+    return stwr.ToString();
+  }
+
+  public string GenerateHelpPage()
+  {
+    using var stwr = new StringWriter();
+
+    var parser = new Parser(settings => settings.HelpWriter = stwr);
+    parser.ParseArguments<Options>(["--help"]);
+
+    return stwr.ToString();
+  }
 
   public Task ParseArgs(IEnumerable<string> args)
   {

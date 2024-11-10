@@ -17,6 +17,16 @@ public class AchievementWatcherGenerator : IGenerator
   string smallIconHash = string.Empty;
   List<string> supportedLangs = [];
 
+  
+  public string GenerateVersion()
+  {
+    return typeof(AchievementWatcherGenerator).Assembly?.GetName()?.Version?.ToString() ?? string.Empty;
+  }
+
+  public string GenerateHelpPage()
+  {
+    return string.Empty;
+  }
 
   public Task ParseArgs(IEnumerable<string> args)
   {

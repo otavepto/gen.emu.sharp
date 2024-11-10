@@ -212,7 +212,7 @@ public class AppMedia
 
     if (vid is null)
     {
-      Log.Instance.Write(Log.Kind.Debug, $"no video was video");
+      Log.Instance.Write(Log.Kind.Debug, $"no video was found");
       return null;
     }
 
