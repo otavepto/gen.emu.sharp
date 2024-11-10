@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "console.vdf.parser": {
+      "commandName": "Project"
+    }
+  }
+}
