@@ -313,10 +313,10 @@ public class GseGenerator : IGenerator
     { "button_menu", "BACK" },
     { "left_bumper", "LBUMPER" },
     { "right_bumper", "RBUMPER" },
-    { "button_back_left", "A" },
-    { "button_back_right", "X" },
-    { "button_back_left_upper", "B" },
-    { "button_back_right_upper", "Y" },
+    { "button_back_left", "Y" },
+    { "button_back_right", "A" },
+    { "button_back_left_upper", "X" },
+    { "button_back_right_upper", "B" },
   };
   readonly static Dictionary<string, string> keymap_left_joystick = new()
   {
