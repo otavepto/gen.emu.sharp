@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Nodes;
 using System.Globalization;
-using ValveKeyValue;
 using gen.emu.types.Models;
 using gen.emu.types.Models.Entitlements;
 using common.utils;
@@ -102,17 +101,11 @@ public class ControllerData
       target.Filename = filename;
 
 
-      KVDocument? vdfDataDoc = null;
       using (var vdfStream = new MemoryStream(vdfData, false))
       {
-        var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-        vdfDataDoc = kv.Deserialize(vdfStream, new KVSerializerOptions
-        {
-          EnableValveNullByteBugBehavior = true,
-        });
+        target.VdfData = Helpers.CreateVdfObj(vdfStream);
       }
 
-      target.VdfData = Helpers.ToJsonObj(vdfDataDoc);
     }
 
     return controllersDetails.Select(kv => kv.Value);

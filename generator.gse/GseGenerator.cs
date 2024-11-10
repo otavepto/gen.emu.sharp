@@ -5,7 +5,6 @@ using gen.emu.shared;
 using gen.emu.types.Generators;
 using gen.emu.types.Models;
 using gen.emu.types.Models.StatsAndAchievements;
-using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -370,6 +369,28 @@ public class GseGenerator : IGenerator
     }
 
     var con = supportedCons.First().VdfData;
+    var presets_actions_bindings = ParseControllerVdfObj(con);
+
+    if (presets_actions_bindings.Count > 0)
+    {
+      Directory.CreateDirectory(controllerFolder);
+      foreach (var (presetName, presetObj) in presets_actions_bindings)
+      {
+        List<string> filecontent = [];
+        foreach (var (actionName, actionBindingsSet) in presetObj)
+        {
+          filecontent.Add($"{actionName}={string.Join(',', actionBindingsSet)}");
+        }
+
+        var filepath = Path.Combine(controllerFolder, $"{presetName}.txt");
+        File.WriteAllLines(filepath, filecontent, Utils.Utf8EncodingNoBom);
+      }
+    }
+
+  }
+
+  public static Dictionary<string, Dictionary<string, HashSet<string>>> ParseControllerVdfObj(JsonObject con)
+  {
     var controller_mappings = con.GetKeyIgnoreCase("controller_mappings").ToObjSafe();
 
     var groups = controller_mappings.GetKeyIgnoreCase("group").ToVdfArraySafe();
@@ -464,7 +485,7 @@ public class GseGenerator : IGenerator
         }
 
         var group_source_binding_elements = group_source_binding_kv.Value.ToStringSafe()
-          .Split(new [] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+          .Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
           .Select(str => str.Trim())
           .ToArray();
         /*
@@ -662,25 +683,11 @@ public class GseGenerator : IGenerator
       presets_actions_bindings[preset_name] = bindings_map;
     }
 
-    if (presets_actions_bindings.Count > 0)
-    {
-      Directory.CreateDirectory(controllerFolder);
-      foreach (var (presetName, presetObj) in presets_actions_bindings)
-      {
-        List<string> filecontent = [];
-        foreach (var (actionName, actionBindingsSet) in presetObj)
-        {
-          filecontent.Add($"{actionName}={string.Join(',', actionBindingsSet)}");
-        }
-
-        var filepath = Path.Combine(controllerFolder, $"{presetName}.txt");
-        File.WriteAllLines(filepath, filecontent, Utils.Utf8EncodingNoBom);
-      }
-    }
+    return presets_actions_bindings;
 
   }
 
-  void AddInputBindings(Dictionary<string, HashSet<string>> actions_bindings, JsonObject group, IReadOnlyDictionary<string, string> keymap, string? forced_btn_mapping = null)
+  static void AddInputBindings(Dictionary<string, HashSet<string>> actions_bindings, JsonObject group, IReadOnlyDictionary<string, string> keymap, string? forced_btn_mapping = null)
   {
     var inputs = group.GetKeyIgnoreCase("inputs").ToVdfArraySafe();
     foreach (var inputObj in inputs)

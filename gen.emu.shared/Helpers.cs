@@ -306,5 +306,18 @@ public static class Helpers
     return [node.DeepClone()];
   }
 
+  public static JsonObject CreateVdfObj(Stream textStream)
+  {
+    ArgumentNullException.ThrowIfNull(textStream);
+
+    var kv = ValveKeyValue.KVSerializer.Create(ValveKeyValue.KVSerializationFormat.KeyValues1Text);
+    var vdfDataDoc = kv.Deserialize(textStream, new ValveKeyValue.KVSerializerOptions
+    {
+      EnableValveNullByteBugBehavior = true,
+    });
+
+    return ToJsonObj(vdfDataDoc);
+  }
+
 }
 
