@@ -296,7 +296,13 @@ public class GseGenerator : IGenerator
   readonly static HashSet<string> supported_controllers_types = [
     "controller_xbox360",
     "controller_xboxone",
-    "controller_steamcontroller_gordon"
+    "controller_steamcontroller_gordon",
+
+    // TODO not sure about these
+    "controller_ps5",
+    "controller_ps4",
+    "controller_switch_pro",
+    "controller_neptune",
   ];
 
   readonly static Dictionary<string, string> keymap_digital = new()
