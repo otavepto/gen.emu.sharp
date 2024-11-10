@@ -9,9 +9,14 @@ A rewrite of the [generate_emu_config](https://gitlab.com/Mr_Goldberg/goldberg_e
 * Download various media assets for each app: backgrounds, icons, screenshots, inventory items images, ...
 
 ## Example
-```shell
-console.gen.emu.cfg 420 730 227300 -v --icons --imgs --scrn --thumbs --vid --invicons --inviconslarge
-```
+* console.gen.emu.cfg
+  ```shell
+  console.gen.emu.cfg 420 730 227300 -v --icons --imgs --scrn --thumbs --vid --invicons --inviconslarge
+  ```
+* console.vdf.parser
+  ```shell
+  console.vdf.parser path/to/file_1.vdf path/to/file_2.vdf 
+  ```
 
 ## Help page
 ```shell
