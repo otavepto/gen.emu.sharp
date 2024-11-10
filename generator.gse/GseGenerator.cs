@@ -335,6 +335,7 @@ public class GseGenerator : IGenerator
     { "click", "RSTICK" },
   };
 
+  // these are found in "group_source_bindings"
   readonly static HashSet<string> supported_keys_digital = [
     "switch",
     "button_diamond",
@@ -460,11 +461,28 @@ public class GseGenerator : IGenerator
           .Split(new [] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
           .Select(str => str.Trim())
           .ToArray();
+        /*
+         * "group_source_bindings": {
+         *   "10": "switch active",
+         *   "11": "button_diamond active",
+         *   "12": "left_trigger inactive",
+         *   "18": "left_trigger active",
+         *   "13": "right_trigger inactive",
+         *   "19": "right_trigger active",
+         *   "14": "right_joystick active",
+         *   "15": "dpad inactive",
+         *   "16": "dpad active",
+         *   "17": "joystick active",
+         *   "21": "left_trackpad active",
+         *   "20": "right_trackpad active"
+         * }
+         */
         if (group_source_binding_elements.Length < 2 || !group_source_binding_elements[1].Equals("active", StringComparison.OrdinalIgnoreCase))
         {
           continue;
         }
 
+        // ex: "button_diamond", "right_trigger", "dpad" ...
         var btn_name_lower = group_source_binding_elements[0].ToLowerInvariant();
         if (supported_keys_digital.Contains(btn_name_lower))
         {
@@ -708,7 +726,7 @@ public class GseGenerator : IGenerator
                         //   2. (optional) action category, ex: "ui", should be from one of the previously parsed action list
                         //   3. action name, ex: "ui_mapzoom_out" or "TRIGGER_LEFT"
 
-                        string current_btn_name = btnKv.Key; // "button_escape", "left_bumper", "button_menu", ...
+                        string current_btn_name = btnKv.Key; // "left_bumper", "button_back_left", ...
 
                         var binding_instructions_lists = bindingKv.Value
                           .ToVdfArraySafe()
