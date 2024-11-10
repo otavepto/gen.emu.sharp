@@ -11,9 +11,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -26,13 +24,18 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
+
+
+##############################
     - name: Publish Linux x64
       run: dotnet publish /p:PublishProfile=linux-x64.pubxml
     
     - name: Archive Linux x64
-      run: tar -czf gen.emu.sharp-linux.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" linux-x64/
+      run: |
+        tar -czf gen.emu.sharp-linux.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" linux-x64/ || exit 1
+        tar -czf console.vdf.parser-linux.x64.tar.gz -C "console.vdf.parser/bin/Release/net8.0/publish/" linux-x64/ || exit 1
 
-    - name: Upload Linux x64
+    - name: Upload Linux x64 (gen.emu.sharp)
       uses: actions/upload-artifact@v4
       with:
         name: "gen.emu.sharp-linux.x64-${{ github.sha }}"
@@ -40,13 +43,26 @@ jobs:
         if-no-files-found: 'error'
         compression-level: 0
 
+    - name: Upload Linux x64 (console.vdf.parser)
+      uses: actions/upload-artifact@v4
+      with:
+        name: "console.vdf.parser-linux.x64-${{ github.sha }}"
+        path: console.vdf.parser-linux.x64.tar.gz
+        if-no-files-found: 'error'
+        compression-level: 0
+
+
+
+##############################
     - name: Publish Windows x64
       run: dotnet publish /p:PublishProfile=win-x64.pubxml
 
     - name: Archive Windows x64
-      run: tar -czf gen.emu.sharp-win.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" win-x64/
+      run: |
+        tar -czf gen.emu.sharp-win.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" win-x64/ || exit 1
+        tar -czf console.vdf.parser-win.x64.tar.gz -C "console.vdf.parser/bin/Release/net8.0/publish/" win-x64/ || exit 1
 
-    - name: Upload Windows x64
+    - name: Upload Windows x64 (gen.emu.sharp)
       uses: actions/upload-artifact@v4
       with:
         name: "gen.emu.sharp-win.x64-${{ github.sha }}"
@@ -54,6 +70,17 @@ jobs:
         if-no-files-found: 'error'
         compression-level: 9
 
+    - name: Upload Windows x64 (console.vdf.parser)
+      uses: actions/upload-artifact@v4
+      with:
+        name: "console.vdf.parser-win.x64-${{ github.sha }}"
+        path: console.vdf.parser-win.x64.tar.gz
+        if-no-files-found: 'error'
+        compression-level: 9
+
+
+
+##############################
     - name: Release
       uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
@@ -61,4 +88,7 @@ jobs:
         files: |
           gen.emu.sharp-linux.x64.tar.gz
           gen.emu.sharp-win.x64.tar.gz
+          
+          console.vdf.parser-linux.x64.tar.gz
+          console.vdf.parser-win.x64.tar.gz
 
