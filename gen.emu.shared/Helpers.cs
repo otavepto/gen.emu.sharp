@@ -71,6 +71,7 @@ public static class Helpers
              *  <new value here>
              * ]
              */
+            currentObj.Remove(nameSafe);
             currentObj[nameSafe] = new JsonArray(null, kv.Value);
           }
           else if (oldVal.GetValueKind() == JsonValueKind.Array) // previously converted
@@ -212,6 +213,7 @@ public static class Helpers
              *  <new value here>
              * ]
              */
+            currentObj.Remove(nameSafe);
             currentObj[nameSafe] = new JsonArray(null, SingleVdfKvToJobj(kv.Value));
           }
           else if (oldVal.GetValueKind() == JsonValueKind.Array) // previously converted
