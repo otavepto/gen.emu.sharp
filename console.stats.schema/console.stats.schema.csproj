@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\common.utils\common.utils.csproj" />
+    <ProjectReference Include="..\gen.emu.cfg\gen.emu.cfg.csproj" />
+    <ProjectReference Include="..\gen.emu.shared\gen.emu.shared.csproj" />
+    <ProjectReference Include="..\generator.gse\generator.gse.csproj" />
+  </ItemGroup>
+
+</Project>

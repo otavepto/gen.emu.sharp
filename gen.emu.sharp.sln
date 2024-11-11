@@ -24,7 +24,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "generator.achievement.watch
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "generator.media.assets", "generator.media.assets\generator.media.assets.csproj", "{08A93E52-91E5-455A-9755-440003B60982}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "console.vdf.parser", "console.vdf.parser\console.vdf.parser.csproj", "{52F644BF-F0F1-4991-9661-18E68911B01D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "console.vdf.parser", "console.vdf.parser\console.vdf.parser.csproj", "{52F644BF-F0F1-4991-9661-18E68911B01D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "console.stats.schema", "console.stats.schema\console.stats.schema.csproj", "{55268478-13CD-428B-ACC5-C2BAC0A94F9B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +70,10 @@ Global
 		{52F644BF-F0F1-4991-9661-18E68911B01D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52F644BF-F0F1-4991-9661-18E68911B01D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52F644BF-F0F1-4991-9661-18E68911B01D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55268478-13CD-428B-ACC5-C2BAC0A94F9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55268478-13CD-428B-ACC5-C2BAC0A94F9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55268478-13CD-428B-ACC5-C2BAC0A94F9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55268478-13CD-428B-ACC5-C2BAC0A94F9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
