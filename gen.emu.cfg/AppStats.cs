@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using ValveKeyValue;
 using gen.emu.types.Models.StatsAndAchievements;
 using gen.emu.types.Models.MediaAssets;
 using common.utils;
@@ -47,18 +46,13 @@ public class AppStats
       throw new InvalidDataException($"Bad stats response for appid {appid} (userid = {userid}): {res.Result}");
     }
 
-    KVDocument? vdfData = null;
+    JsonObject jobj = [];
     using (var vdfStream = new MemoryStream(res.Msg.schema, false))
     {
-      var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
-      vdfData = kv.Deserialize(vdfStream, new KVSerializerOptions
-      {
-        EnableValveNullByteBugBehavior = true,
-      });
+      // { "730":{...}, "420":{...} }
+      jobj = Helpers.LoadVdf(vdfStream, Helpers.VdfType.Binary);
     }
 
-    // { "730":{...}, "420":{...} }
-    var jobj = Helpers.ToJsonObj(vdfData);
     var statsObjs = jobj
       // SelectMany will expand each json object to list of key-value pair
       .SelectMany(appidObj => appidObj.Value.GetKeyIgnoreCase("stats").ToObjSafe());

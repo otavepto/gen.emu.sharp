@@ -103,7 +103,7 @@ public class ControllerData
 
       using (var vdfStream = new MemoryStream(vdfData, false))
       {
-        target.VdfData = Helpers.CreateVdfObj(vdfStream);
+        target.VdfData = Helpers.LoadVdf(vdfStream, Helpers.VdfType.Text);
       }
 
     }

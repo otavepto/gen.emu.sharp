@@ -82,5 +82,5 @@ JsonObject GetVdfFileData(string filepath)
     Mode = FileMode.Open,
     Share = FileShare.Read,
   });
-  return Helpers.CreateVdfObj(vdfStream);
+  return Helpers.LoadVdf(vdfStream, Helpers.VdfType.Text);
 }

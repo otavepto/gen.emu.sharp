@@ -308,12 +308,22 @@ public static class Helpers
     return [node.DeepClone()];
   }
 
-  public static JsonObject CreateVdfObj(Stream textStream)
+  public enum VdfType
   {
-    ArgumentNullException.ThrowIfNull(textStream);
-
-    var kv = ValveKeyValue.KVSerializer.Create(ValveKeyValue.KVSerializationFormat.KeyValues1Text);
-    var vdfDataDoc = kv.Deserialize(textStream, new ValveKeyValue.KVSerializerOptions
+    Binary,
+    Text,
+  }
+  public static JsonObject LoadVdf(Stream inStream, VdfType vdfType)
+  {
+    ArgumentNullException.ThrowIfNull(inStream);
+    var format = vdfType switch
+    {
+      VdfType.Binary => ValveKeyValue.KVSerializationFormat.KeyValues1Binary,
+      VdfType.Text => ValveKeyValue.KVSerializationFormat.KeyValues1Binary,
+      _ => throw new ArgumentException($"Invalid VDF type {vdfType}"),
+    };
+    var kv = ValveKeyValue.KVSerializer.Create(format);
+    var vdfDataDoc = kv.Deserialize(inStream, new ValveKeyValue.KVSerializerOptions
     {
       EnableValveNullByteBugBehavior = true,
     });
