@@ -57,11 +57,21 @@ public class AppStats
       // SelectMany will expand each json object to list of key-value pair
       .SelectMany(appidObj => appidObj.Value.GetKeyIgnoreCase("stats").ToObjSafe());
 
-    var stats = GetStats(statsObjs);
-    var achs = GetAchievements(statsObjs, appid);
+    var stats = ParseStats(statsObjs);
+    var achs = ParseAchievements(statsObjs);
 
-    // TODO IMPL THIS
     return (jobj, stats, achs);
+  }
+
+  public (IList<StatModel> Stats, IList<AchievementModel> Achievements) ParseStatsSchema(JsonObject vdfObj)
+  {
+    var statsObjs = vdfObj
+      // SelectMany will expand each json object to list of key-value pair
+      .SelectMany(appidObj => appidObj.Value.GetKeyIgnoreCase("stats").ToObjSafe());
+
+    var stats = ParseStats(statsObjs);
+    var achs = ParseAchievements(statsObjs);
+    return (stats, achs);
   }
 
   public Task DownloadAchievementsIconsAsync(IEnumerable<AchievementModel> achievements, uint appid, CancellationToken cancelToken = default)
@@ -129,7 +139,7 @@ public class AppStats
     }, 30, 2, cancelToken);
   }
 
-  List<StatModel> GetStats(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs)
+  List<StatModel> ParseStats(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs)
   {
     List<StatModel> results = [];
     foreach (var kv in statsObjs)
@@ -232,7 +242,7 @@ public class AppStats
     return results;
   }
 
-  List<AchievementModel> GetAchievements(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs, uint appid)
+  List<AchievementModel> ParseAchievements(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs)
   {
     var achs = statsObjs
       .Where(kv => VdfStatType.Map == (VdfStatType)kv.Value.GetKeyIgnoreCase("type").ToNumSafe())

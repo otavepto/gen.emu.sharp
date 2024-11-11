@@ -112,14 +112,19 @@ public class GseGenerator : IGenerator
     Directory.CreateDirectory(baseFolder);
 
     SaveAppid();
-    var invTask = SaveAchievements();
+    var invTask = SaveAchievements(
+      appInfoModel.StatsAndAchievements.Achievements,
+      settingsFolder,
+      achievementsImagesFolder,
+      achievementsImagesLockedFolder
+    );
     SaveInventory();
     SaveExtraInfo();
     SaveDepots();
     SaveSupportedLanguages();
     SaveBranches();
     SaveDlcs();
-    SaveStats();
+    SaveStats(appInfoModel.StatsAndAchievements.Stats, settingsFolder);
     SaveController();
     DisableExtraFeatures();
 
@@ -199,9 +204,9 @@ public class GseGenerator : IGenerator
     WriteObj(appInfoModel.Product.AppDetails, Path.Combine(extraInfoFolder, "app_details.json"));
   }
 
-  void SaveStats()
+  public static void SaveStats(IEnumerable<StatModel> statsModels, string baseFolder)
   {
-    var stats = appInfoModel.StatsAndAchievements.Stats
+    var stats = statsModels
       .Where(s => s.InternalName.Length > 0)
       .ToList();
     stats.Sort((a, b) => a.Id.CompareTo(b.Id));
@@ -211,8 +216,8 @@ public class GseGenerator : IGenerator
       return;
     }
 
-    Directory.CreateDirectory(settingsFolder);
-    File.WriteAllLines(Path.Combine(settingsFolder, "stats.txt"), stats.Select(s =>
+    Directory.CreateDirectory(baseFolder);
+    File.WriteAllLines(Path.Combine(baseFolder, "stats.txt"), stats.Select(s =>
       $"{s.InternalName}={s.Type.GetEnumAttribute<EnumMemberAttribute, StatType>()?.Value}={(int)s.DefaultValue}"
     ), Utils.Utf8EncodingNoBom);
     
@@ -881,9 +886,9 @@ public class GseGenerator : IGenerator
     Utils.WriteJson(defaultInvItems, Path.Combine(settingsFolder, "default_items.json"));
   }
 
-  Task SaveAchievements()
+  public static Task SaveAchievements(IReadOnlyList<AchievementModel> achsModels, string baseFolder, string achievementsImagesFolder, string achievementsImagesLockedFolder)
   {
-    if (appInfoModel.StatsAndAchievements.Achievements.Count == 0)
+    if (achsModels.Count == 0)
     {
       return Task.CompletedTask;
     }
@@ -892,7 +897,7 @@ public class GseGenerator : IGenerator
     bool needDefaultIconLocked = false;
 
     List<JsonObject> achs = [];
-    foreach (var ach in appInfoModel.StatsAndAchievements.Achievements.OrderBy(ach => ach.Id))
+    foreach (var ach in achsModels.OrderBy(ach => ach.Id))
     {
       string iconUnlockedName;
       if (string.IsNullOrEmpty(ach.IconUnlocked.Name))
@@ -936,8 +941,8 @@ public class GseGenerator : IGenerator
       achs.Add(obj);
     }
 
-    Directory.CreateDirectory(settingsFolder);
-    Utils.WriteJson(achs, Path.Combine(settingsFolder, "achievements.json"));
+    Directory.CreateDirectory(baseFolder);
+    Utils.WriteJson(achs, Path.Combine(baseFolder, "achievements.json"));
 
     if (needDefaultIconUnlocked )
     {
@@ -963,8 +968,8 @@ public class GseGenerator : IGenerator
       iconStream.CopyTo(fs);
     }
 
-    var iconsUnlocked = appInfoModel.StatsAndAchievements.Achievements.Select(ach => ach.IconUnlocked);
-    var iconsLocked = appInfoModel.StatsAndAchievements.Achievements.Select(ach => ach.IconLocked);
+    var iconsUnlocked = achsModels.Select(ach => ach.IconUnlocked);
+    var iconsLocked = achsModels.Select(ach => ach.IconLocked);
 
     Task iconsUnlockedTask = Task.CompletedTask;
     Task iconsLockedTask = Task.CompletedTask;
