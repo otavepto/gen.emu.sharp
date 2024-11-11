@@ -34,6 +34,7 @@ jobs:
       run: |
         tar -czf gen.emu.sharp-linux.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" linux-x64/ || exit 1
         tar -czf console.vdf.parser-linux.x64.tar.gz -C "console.vdf.parser/bin/Release/net8.0/publish/" linux-x64/ || exit 1
+        tar -czf console.stats.schema-linux.x64.tar.gz -C "console.stats.schema/bin/Release/net8.0/publish/" linux-x64/ || exit 1
 
     - name: Upload Linux x64 (gen.emu.sharp)
       uses: actions/upload-artifact@v4
@@ -51,6 +52,14 @@ jobs:
         if-no-files-found: 'error'
         compression-level: 0
 
+    - name: Upload Linux x64 (console.stats.schema)
+      uses: actions/upload-artifact@v4
+      with:
+        name: "console.stats.schema-linux.x64-${{ github.sha }}"
+        path: console.stats.schema-linux.x64.tar.gz
+        if-no-files-found: 'error'
+        compression-level: 0
+
 
 
 ##############################
@@ -61,6 +70,7 @@ jobs:
       run: |
         tar -czf gen.emu.sharp-win.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" win-x64/ || exit 1
         tar -czf console.vdf.parser-win.x64.tar.gz -C "console.vdf.parser/bin/Release/net8.0/publish/" win-x64/ || exit 1
+        tar -czf console.stats.schema-win.x64.tar.gz -C "console.stats.schema/bin/Release/net8.0/publish/" win-x64/ || exit 1
 
     - name: Upload Windows x64 (gen.emu.sharp)
       uses: actions/upload-artifact@v4
@@ -78,6 +88,14 @@ jobs:
         if-no-files-found: 'error'
         compression-level: 9
 
+    - name: Upload Windows x64 (console.stats.schema)
+      uses: actions/upload-artifact@v4
+      with:
+        name: "console.stats.schema-win.x64-${{ github.sha }}"
+        path: console.stats.schema-win.x64.tar.gz
+        if-no-files-found: 'error'
+        compression-level: 9
+
 
 
 ##############################
@@ -91,4 +109,7 @@ jobs:
           
           console.vdf.parser-linux.x64.tar.gz
           console.vdf.parser-win.x64.tar.gz
+
+          console.stats.schema-linux.x64.tar.gz
+          console.stats.schema-win.x64.tar.gz
 
