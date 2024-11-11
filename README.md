@@ -17,6 +17,10 @@ A rewrite of the [generate_emu_config](https://gitlab.com/Mr_Goldberg/goldberg_e
   ```shell
   console.vdf.parser path/to/file_1.vdf path/to/file_2.vdf 
   ```
+* console.stats.schema
+  ```shell
+  console.stats.schema path/to/UserGameStatsSchema_480.bin path/to/UserGameStatsSchema_730.bin
+  ```
 
 ## Help page
 ```shell
