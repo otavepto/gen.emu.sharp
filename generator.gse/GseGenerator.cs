@@ -112,20 +112,15 @@ public class GseGenerator : IGenerator
     Directory.CreateDirectory(baseFolder);
 
     SaveAppid();
-    var invTask = SaveAchievements(
-      appInfoModel.StatsAndAchievements.Achievements,
-      settingsFolder,
-      achievementsImagesFolder,
-      achievementsImagesLockedFolder
-    );
+    var invTask = SaveAchievements(appInfoModel.StatsAndAchievements.Achievements);
     SaveInventory();
     SaveExtraInfo();
     SaveDepots();
     SaveSupportedLanguages();
     SaveBranches();
     SaveDlcs();
-    SaveStats(appInfoModel.StatsAndAchievements.Stats, settingsFolder);
     SaveController();
+    SaveStats(appInfoModel.StatsAndAchievements.Stats);
     DisableExtraFeatures();
 
     await invTask.ConfigureAwait(false);
@@ -209,7 +204,7 @@ public class GseGenerator : IGenerator
     WriteObj(appInfoModel.Product.AppDetails, Path.Combine(extraInfoFolder, "app_details.json"));
   }
 
-  public static void SaveStats(IEnumerable<StatModel> statsModels, string baseFolder)
+  public void SaveStats(IEnumerable<StatModel> statsModels)
   {
     var stats = statsModels
       .Where(s => s.InternalName.Length > 0)
@@ -221,8 +216,8 @@ public class GseGenerator : IGenerator
       return;
     }
 
-    Directory.CreateDirectory(baseFolder);
-    File.WriteAllLines(Path.Combine(baseFolder, "stats.txt"), stats.Select(s =>
+    Directory.CreateDirectory(settingsFolder);
+    File.WriteAllLines(Path.Combine(settingsFolder, "stats.txt"), stats.Select(s =>
       $"{s.InternalName}={s.Type.GetEnumAttribute<EnumMemberAttribute, StatType>()?.Value}={(int)s.DefaultValue}"
     ), Utils.Utf8EncodingNoBom);
     
@@ -891,7 +886,7 @@ public class GseGenerator : IGenerator
     Utils.WriteJson(defaultInvItems, Path.Combine(settingsFolder, "default_items.json"));
   }
 
-  public static Task SaveAchievements(IReadOnlyList<AchievementModel> achsModels, string baseFolder, string achievementsImagesFolder, string achievementsImagesLockedFolder)
+  public Task SaveAchievements(IReadOnlyList<AchievementModel> achsModels)
   {
     if (achsModels.Count == 0)
     {
@@ -946,8 +941,8 @@ public class GseGenerator : IGenerator
       achs.Add(obj);
     }
 
-    Directory.CreateDirectory(baseFolder);
-    Utils.WriteJson(achs, Path.Combine(baseFolder, "achievements.json"));
+    Directory.CreateDirectory(settingsFolder);
+    Utils.WriteJson(achs, Path.Combine(settingsFolder, "achievements.json"));
 
     if (needDefaultIconUnlocked )
     {

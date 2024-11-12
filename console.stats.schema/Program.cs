@@ -30,30 +30,26 @@ if (filepaths.Count == 0)
 }
 
 Log.Instance.Write(Log.Kind.Info, $"Parsing [{filepaths.Count}] files");
+var gseGen = new GseGenerator();
 
 foreach (var item in filepaths)
 {
   var lglvfile = Log.Instance.StartSteps($"Parsing VDF file '{item}'");
   try
   {
+    var baseFolder = Path.Combine(Utils.GetExeDir(), "generated", Path.GetFileNameWithoutExtension(item));
+    var backupFolder = Path.Combine(baseFolder, "backup");
+
     var vdfObj = GetVdfFileData(item);
 
-    var baseFolder = Path.Combine("generated", Path.GetFileNameWithoutExtension(item));
-
-    {
-      var backupFolder = Path.Combine(baseFolder, "backup");
-      Utils.WriteJson(vdfObj, Path.Combine(backupFolder, "converted.json"));
-    }
+    Directory.CreateDirectory(backupFolder);
+    Utils.WriteJson(vdfObj, Path.Combine(backupFolder, "converted.json"));
 
     var (stats, achs) = AppStats.Instance.ParseStatsSchema(vdfObj);
 
-    var steam_settingsFolder = Path.Combine(baseFolder, "steam_settings");
-
-    var achievementsImagesFolder = Path.Combine(steam_settingsFolder, "ach_images");
-    var achievementsImagesLockedFolder = Path.Combine(achievementsImagesFolder, "locked");
-
-    GseGenerator.SaveStats(stats, steam_settingsFolder);
-    await GseGenerator.SaveAchievements(achs.AsReadOnly(), steam_settingsFolder, achievementsImagesFolder, achievementsImagesLockedFolder);
+    await gseGen.Setup(baseFolder).ConfigureAwait(false);
+    gseGen.SaveStats(stats);
+    await gseGen.SaveAchievements(achs.AsReadOnly());
 
     Log.Instance.Write(Log.Kind.Success, $"Done");
   }
@@ -62,6 +58,16 @@ foreach (var item in filepaths)
     Log.Instance.WriteException(ex);
     Log.Instance.Write(Log.Kind.Error, $"Failed: {ex.Message}");
   }
+
+  try
+  {
+    await gseGen.Cleanup();
+  }
+  catch (Exception ex)
+  {
+    Log.Instance.WriteException(ex);
+  }
+
   Log.Instance.EndSteps(lglvfile);
 }
 
