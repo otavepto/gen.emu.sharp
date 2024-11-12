@@ -24,7 +24,7 @@ public class GseGenerator : IGenerator
   public class Options
   {
     [Option("nonet", Default = false, Required = false,
-      HelpText = "disable networking (this won't prevent games from making external web requests)")]
+      HelpText = "disable networking entirely")]
     public bool DisableNetworking { get; private set; }
 
   }
@@ -137,9 +137,11 @@ public class GseGenerator : IGenerator
     if (options.DisableNetworking)
     {
       var mainConn = iniFiles.GetSection("configs.main.ini", "main::connectivity");
+      mainConn["disable_lan_only"] = ("0", "prevent hooking OS networking APIs and allow any external requests");
       mainConn["disable_networking"] = ("1", "disable all steam networking interface functionality");
       mainConn["disable_sharing_stats_with_gameserver"] = ("1", "prevent sharing stats and achievements with any game server, this also disables the interface ISteamGameServerStats");
       mainConn["disable_source_query"] = ("1", "do not send server details to the server browser, only works for game servers");
+      mainConn["share_leaderboards_over_network"] = ("0", "enable sharing leaderboards scores with people playing the same game on the same network");
     }
 
   }
