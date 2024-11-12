@@ -10,6 +10,7 @@ public class IniManager
 {
   readonly Dictionary<string, Dictionary<string, Dictionary<string, (string Value, string? Comment)>>> iniFiles = [];
 
+  public int Count => iniFiles.Count;
 
   public Dictionary<string, (string Value, string? Comment)> GetSection(string filename, string sectionName)
   {

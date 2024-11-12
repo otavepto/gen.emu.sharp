@@ -146,8 +146,11 @@ public class GseGenerator : IGenerator
 
   public Task Cleanup()
   {
+    if (iniFiles.Count > 0)
+  {
     Directory.CreateDirectory(settingsFolder);
     iniFiles.WriteAllFiles(settingsFolder);
+    }
 
     appInfoModel = null!;
 
