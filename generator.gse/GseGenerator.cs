@@ -93,12 +93,7 @@ public class GseGenerator : IGenerator
   public Task Setup(string basepath)
   {
     baseFolder = Path.Combine(basepath, "gse");
-    return Task.CompletedTask;
-  }
-
-  public async Task Generate(AppInfoModel appInfoModel)
-  {
-    this.appInfoModel = appInfoModel;
+    Directory.CreateDirectory(baseFolder);
 
     extraInfoFolder = Path.Combine(baseFolder, "extra_info");
 
@@ -109,7 +104,12 @@ public class GseGenerator : IGenerator
     achievementsImagesFolder = Path.Combine(settingsFolder, ACHIEVEMENT_IMAGE_FOLDER_NAME);
     achievementsImagesLockedFolder = Path.Combine(achievementsImagesFolder, ACHIEVEMENT_IMAGE_LOCKED_FOLDER_NAME);
 
-    Directory.CreateDirectory(baseFolder);
+    return Task.CompletedTask;
+  }
+
+  public async Task Generate(AppInfoModel appInfoModel)
+  {
+    this.appInfoModel = appInfoModel;
 
     SaveAppid();
     var invTask = SaveAchievements(appInfoModel.StatsAndAchievements.Achievements);
@@ -144,9 +144,9 @@ public class GseGenerator : IGenerator
   public Task Cleanup()
   {
     if (iniFiles.Count > 0)
-  {
-    Directory.CreateDirectory(settingsFolder);
-    iniFiles.WriteAllFiles(settingsFolder);
+    {
+      Directory.CreateDirectory(settingsFolder);
+      iniFiles.WriteAllFiles(settingsFolder);
     }
 
     appInfoModel = null!;

@@ -385,7 +385,7 @@ async Task GetAppDetailsAsync(AppInfoModel appModel)
   }
   catch (Exception e)
   {
-    Log.Instance.Write(Log.Kind.Warning, $"Couldn't get app details, app might be not released yet, removed from store, or hidden: '{e.Message}'");
+    Log.Instance.Write(Log.Kind.Warning, $"Couldn't get app details, app might be not released yet, removed from store, or hidden: {e.Message}");
   }
   Log.Instance.EndSteps(lglvl);
 }
@@ -440,7 +440,7 @@ async Task DownloadInventoryItems(AppInfoModel appModel)
   }
   catch (Exception ex)
   {
-    Log.Instance.Write(Log.Kind.Warning, $"App doesn't seem to have any inventory items: '{ex.Message}'");
+    Log.Instance.Write(Log.Kind.Warning, $"App doesn't seem to have any inventory items: {ex.Message}");
   }
   Log.Instance.EndSteps(lglvl);
 }
@@ -519,7 +519,7 @@ async Task GetControllersInfoAsync(AppInfoModel appModel)
   }
   catch (Exception ex)
   {
-    Log.Instance.Write(Log.Kind.Warning, $"App doesn't seem to have public controllers info: '{ex.Message}'");
+    Log.Instance.Write(Log.Kind.Warning, $"App doesn't seem to have public controllers info: {ex.Message}");
   }
   Log.Instance.EndSteps(lglvl);
 }
