@@ -319,7 +319,7 @@ public static class Helpers
     var format = vdfType switch
     {
       VdfType.Binary => ValveKeyValue.KVSerializationFormat.KeyValues1Binary,
-      VdfType.Text => ValveKeyValue.KVSerializationFormat.KeyValues1Binary,
+      VdfType.Text => ValveKeyValue.KVSerializationFormat.KeyValues1Text,
       _ => throw new ArgumentException($"Invalid VDF type {vdfType}"),
     };
     var kv = ValveKeyValue.KVSerializer.Create(format);
