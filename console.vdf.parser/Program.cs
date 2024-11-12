@@ -29,48 +29,41 @@ if (filepaths.Count == 0)
 }
 
 Log.Instance.Write(Log.Kind.Info, $"Parsing [{filepaths.Count}] files");
+var gseGen = new GseGenerator();
 
 foreach (var item in filepaths)
 {
   var lglvfile = Log.Instance.StartSteps($"Parsing VDF file '{item}'");
   try
   {
+    var baseFolder = Path.Combine(Utils.GetExeDir(), "generated", Path.GetFileNameWithoutExtension(item));
+    var backupFolder = Path.Combine(baseFolder, "backup");
+
     var vdfObj = GetVdfFileData(item);
-    var presets_actions_bindings = GseGenerator.ParseControllerVdfObj(vdfObj);
 
-    if (presets_actions_bindings.Count > 0)
-    {
-      var baseFolder = Path.Combine("generated", Path.GetFileNameWithoutExtension(item));
-      var controllerFolder = Path.Combine(baseFolder, "controller");
-      var backupFolder = Path.Combine(baseFolder, "backup");
-      Directory.CreateDirectory(controllerFolder);
-      Directory.CreateDirectory(backupFolder);
-      Utils.WriteJson(vdfObj, Path.Combine(backupFolder, "converted.json"));
-      foreach (var (presetName, presetObj) in presets_actions_bindings)
-      {
-        List<string> filecontent = [];
-        foreach (var (actionName, actionBindingsSet) in presetObj)
-        {
-          filecontent.Add($"{actionName}={string.Join(',', actionBindingsSet)}");
-        }
+    Directory.CreateDirectory(backupFolder);
+    Utils.WriteJson(vdfObj, Path.Combine(backupFolder, "converted.json"));
 
-        var filepath = Path.Combine(controllerFolder, $"{presetName}.txt");
-        File.WriteAllLines(filepath, filecontent, Utils.Utf8EncodingNoBom);
-      }
+    await gseGen.Setup(baseFolder).ConfigureAwait(false);
+    gseGen.SaveControllerVdfObj(vdfObj);
 
-      Log.Instance.Write(Log.Kind.Success, $"Written [{presets_actions_bindings.Count}] presets");
-    }
-    else
-    {
-      Log.Instance.Write(Log.Kind.Warning, $"No supported presets were found");
-    }
-
+    Log.Instance.Write(Log.Kind.Success, $"Done");
   }
   catch (Exception ex)
   {
     Log.Instance.WriteException(ex);
     Log.Instance.Write(Log.Kind.Error, $"Failed: {ex.Message}");
   }
+
+  try
+  {
+    await gseGen.Cleanup();
+  }
+  catch (Exception ex)
+  {
+    Log.Instance.WriteException(ex);
+  }
+
   Log.Instance.EndSteps(lglvfile);
 }
 

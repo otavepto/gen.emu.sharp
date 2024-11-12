@@ -119,7 +119,7 @@ public class GseGenerator : IGenerator
     SaveSupportedLanguages();
     SaveBranches();
     SaveDlcs();
-    SaveController();
+    ParseAndSaveController();
     SaveStats(appInfoModel.StatsAndAchievements.Stats);
     DisableExtraFeatures();
 
@@ -297,14 +297,14 @@ public class GseGenerator : IGenerator
 
   }
 
-  readonly static HashSet<string> supported_controllers_types = [
+  readonly static string[] supported_controllers_types = [ // in order of preference
     "controller_xbox360",
     "controller_xboxone",
     "controller_steamcontroller_gordon",
 
     // TODO not sure about these
-    "controller_ps5",
     "controller_ps4",
+    "controller_ps5",
     "controller_switch_pro",
     "controller_neptune",
   ];
@@ -361,7 +361,7 @@ public class GseGenerator : IGenerator
     "dpad",
   ];
 
-  void SaveController()
+  void ParseAndSaveController()
   {
     var supportedCons = appInfoModel.ControllerInfo
       .Where(con =>
@@ -373,28 +373,26 @@ public class GseGenerator : IGenerator
       return;
     }
 
-    var con = supportedCons.First().VdfData;
-    var presets_actions_bindings = ParseControllerVdfObj(con);
-
-    if (presets_actions_bindings.Count > 0)
+    // find the most prefered controller type
+    JsonObject? con = default;
+    foreach (var item in supported_controllers_types)
     {
-      Directory.CreateDirectory(controllerFolder);
-      foreach (var (presetName, presetObj) in presets_actions_bindings)
+      foreach (var supportedCon in supportedCons)
       {
-        List<string> filecontent = [];
-        foreach (var (actionName, actionBindingsSet) in presetObj)
+        if (supportedCon.ControllerType.Equals(item, StringComparison.OrdinalIgnoreCase))
         {
-          filecontent.Add($"{actionName}={string.Join(',', actionBindingsSet)}");
+          con = supportedCon.VdfData;
+          break;
         }
-
-        var filepath = Path.Combine(controllerFolder, $"{presetName}.txt");
-        File.WriteAllLines(filepath, filecontent, Utils.Utf8EncodingNoBom);
       }
     }
+    con ??= supportedCons.First().VdfData; // if nothing found just get the 1st one
+
+    SaveControllerVdfObj(con);
 
   }
 
-  public static Dictionary<string, Dictionary<string, HashSet<string>>> ParseControllerVdfObj(JsonObject con)
+  public void SaveControllerVdfObj(JsonObject con)
   {
     var controller_mappings = con.GetKeyIgnoreCase("controller_mappings").ToObjSafe();
 
@@ -688,11 +686,29 @@ public class GseGenerator : IGenerator
       presets_actions_bindings[preset_name] = bindings_map;
     }
 
-    return presets_actions_bindings;
+    if (presets_actions_bindings.Count > 0)
+    {
+      Directory.CreateDirectory(controllerFolder);
+      foreach (var (presetName, presetObj) in presets_actions_bindings)
+      {
+        List<string> filecontent = [];
+        foreach (var (actionName, actionBindingsSet) in presetObj)
+        {
+          filecontent.Add($"{actionName}={string.Join(',', actionBindingsSet)}");
+        }
+
+        var filepath = Path.Combine(controllerFolder, $"{presetName}.txt");
+        File.WriteAllLines(filepath, filecontent, Utils.Utf8EncodingNoBom);
+      }
+    }
+    else
+    {
+      Log.Instance.Write(Log.Kind.Warning, $"No supported controller presets were found");
+    }
 
   }
 
-  static void AddInputBindings(Dictionary<string, HashSet<string>> actions_bindings, JsonObject group, IReadOnlyDictionary<string, string> keymap, string? forced_btn_mapping = null)
+  void AddInputBindings(Dictionary<string, HashSet<string>> actions_bindings, JsonObject group, IReadOnlyDictionary<string, string> keymap, string? forced_btn_mapping = null)
   {
     var inputs = group.GetKeyIgnoreCase("inputs").ToVdfArraySafe();
     foreach (var inputObj in inputs)
