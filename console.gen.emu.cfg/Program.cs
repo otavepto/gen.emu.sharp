@@ -529,7 +529,7 @@ async Task GettTopReviewersAsync(AppInfoModel appModel)
   var lglvl = Log.Instance.StartSteps($"Getting IDs of top app reviewers on the store");
   try
   {
-    appModel.TopReviewers.CopyFrom(await TopReviewers.GetTopReviewersAsync(appModel.AppId, 50).ConfigureAwait(false));
+    appModel.TopReviewers.CopyFrom(await TopReviewers.GetTopReviewersAsync(appModel.AppId, 150).ConfigureAwait(false));
 
     if (appModel.TopReviewers.Count > 0)
     {
