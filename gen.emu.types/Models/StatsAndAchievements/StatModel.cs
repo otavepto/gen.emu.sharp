@@ -36,6 +36,8 @@ public class StatModel
   public double MaxValue { get; set; } = 0;
 
   public double DefaultValue { get; set; } = 0;
+  
+  public double GlobalTotalValue { get; set; } = 0;
 
   public bool IsValueIncreasesOnly { get; set; }
 

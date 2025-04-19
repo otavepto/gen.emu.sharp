@@ -57,19 +57,19 @@ public class AppStats
       // SelectMany will expand each json object to list of key-value pair
       .SelectMany(appidObj => appidObj.Value.GetKeyIgnoreCase("stats").ToObjSafe());
 
-    var stats = ParseStats(statsObjs);
+    var stats = await ParseStatsAsync(statsObjs, appid).ConfigureAwait(false);
     var achs = ParseAchievements(statsObjs);
 
     return (jobj, stats, achs);
   }
 
-  public (IList<StatModel> Stats, IList<AchievementModel> Achievements) ParseStatsSchema(JsonObject vdfObj)
+  public async Task<(IList<StatModel> Stats, IList<AchievementModel> Achievements)> ParseStatsSchemaAsync(JsonObject vdfObj)
   {
     var statsObjs = vdfObj
       // SelectMany will expand each json object to list of key-value pair
       .SelectMany(appidObj => appidObj.Value.GetKeyIgnoreCase("stats").ToObjSafe());
 
-    var stats = ParseStats(statsObjs);
+    var stats = await ParseStatsAsync(statsObjs).ConfigureAwait(false);
     var achs = ParseAchievements(statsObjs);
     return (stats, achs);
   }
@@ -139,7 +139,7 @@ public class AppStats
     }, 30, 2, cancelToken);
   }
 
-  List<StatModel> ParseStats(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs)
+  async Task<List<StatModel>> ParseStatsAsync(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs, uint appid = 0, CancellationToken ct = default)
   {
     List<StatModel> results = [];
     foreach (var kv in statsObjs)
@@ -237,6 +237,49 @@ public class AppStats
       }
 
       results.Add(stat);
+    }
+
+    if (appid == 0)
+    {
+      Log.Instance.Write(Log.Kind.Warning, $"Skipping GlobalStats");
+    }
+    else
+    {
+      var userStatsCustomHandler = Client.Instance.GetSteamClient.GetHandler<UserStatsCustomHandler>();
+      if (userStatsCustomHandler is null)
+      {
+        Log.Instance.Write(Log.Kind.Error, $"Failed to get UserStatsCustomHandler");
+      }
+      else
+      {
+        var lglvl = Log.Instance.StartSteps($"Downloading global total aggregate for stats");
+        try
+        {
+          var statsNames = results.Select(ss => ss.InternalName).ToArray();
+          var globalStats = await userStatsCustomHandler.GetGlobalStatsForGameAsync(appid, statsNames, ct).ConfigureAwait(false);
+          foreach (var (statName, globalTotal) in globalStats)
+          {
+            var statObj = results.Find(ss => ss.InternalName.Equals(statName, StringComparison.OrdinalIgnoreCase));
+            if (statObj is not null)
+            {
+              statObj.GlobalTotalValue = globalTotal;
+            }
+          }
+          if (globalStats.Length > 0)
+          {
+            Log.Instance.Write(Log.Kind.Success, $"Success");
+          }
+          else
+          {
+            Log.Instance.Write(Log.Kind.Warning, $"Nothing was downloaded");
+          }
+        }
+        catch (Exception ex)
+        {
+          Log.Instance.Write(Log.Kind.Error, $"Failed to get GlobalStats for appid {appid} '{ex.Message}'");
+        }
+        Log.Instance.EndSteps(lglvl);
+      }
     }
 
     return results;

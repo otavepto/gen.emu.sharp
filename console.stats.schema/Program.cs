@@ -45,7 +45,7 @@ foreach (var item in filepaths)
     Directory.CreateDirectory(backupFolder);
     Utils.WriteJson(vdfObj, Path.Combine(backupFolder, "converted.json"));
 
-    var (stats, achs) = AppStats.Instance.ParseStatsSchema(vdfObj);
+    var (stats, achs) = await AppStats.Instance.ParseStatsSchemaAsync(vdfObj).ConfigureAwait(false);
 
     await gseGen.Setup(baseFolder).ConfigureAwait(false);
     gseGen.SaveStats(stats);

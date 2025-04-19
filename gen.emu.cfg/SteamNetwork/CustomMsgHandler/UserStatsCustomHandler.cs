@@ -1,5 +1,9 @@
 ﻿using SteamKit2;
 using SteamKit2.Internal; // this namespace stores the generated protobuf message structures
+using System.Text;
+using System.Text.Json.Nodes;
+using common.utils;
+using common.utils.Logging;
 
 
 // https://github.com/SteamRE/SteamKit/blob/master/Samples/010_Extending
@@ -68,6 +72,82 @@ public class UserStatsCustomHandler : ClientMsgHandler
 
   }
 
+  // https://partner.steamgames.com/doc/webapi/isteamuserstats#GetGlobalStatsForGame
+  // https://partner.steamgames.com/doc/features/achievements#global_stats
+  // https://steamapi.xpaw.me/#ISteamUserStats/GetGlobalStatsForGame
+  public async Task<(string StatName, double GlobalTotalAggregate)[]> GetGlobalStatsForGameAsync(uint appid, IList<string> stats, CancellationToken ct = default)
+  {
+    if (appid == 0)
+    {
+      throw new InvalidOperationException($"Invalid appid");
+    }
+
+    if (stats.Count == 0)
+    {
+      return [];
+    }
+
+    // we can't optimize this to request more than 1 item at a time
+    // appid 102600 has these stats: "Chaos Chamber_won", "Chaos Chamber_failed", "Chaos Chamber_restarted"
+    // and the returned json looks like this:
+    //
+    // {
+    //   "response":{
+    //     "globalstats":{
+    //       "Chaos":{ "total":"1844501" },
+    //       "Chaos":{ "total":"61493" },
+    //       "Chaos":{ "total":"96996 "}
+    //     },
+    //     "result":1
+    //   }
+    // }
+    //
+    // because all stats end up having the same name, we have to request them 1 by 1 and ignore the name entirely
+
+    const int STATS_BATCH = 10;
+    var results = await Utils.ParallelJobsAsync(stats, async (statName, jobIdx, _, ct) =>
+    {
+      var detailsBytes = await Utils.WebRequestAsync(
+        url: $"https://api.steampowered.com/ISteamUserStats/GetGlobalStatsForGame/v1",
+        urlParams: new JsonObject
+        {
+          ["appid"] = appid,
+          ["count"] = 1,
+          ["name[0]"] = statName,
+        },
+        method: Utils.WebMethod.Get,
+        cancelToken: ct
+      ).ConfigureAwait(false);
+      if (detailsBytes is null || detailsBytes.Length == 0)
+      {
+        string err = $"Failed to get a web response for the global total aggregate of stat '{statName}'";
+        Log.Instance.Write(Log.Kind.Debug, err);
+        throw new InvalidOperationException(err);
+      }
+
+      var detailsStr = Encoding.UTF8.GetString(detailsBytes);
+      var jnode = JsonObject.Parse(detailsStr);
+      var reponseJobj = jnode?.AsObject().GetKeyIgnoreCase("response");
+      bool isOk = reponseJobj.GetKeyIgnoreCase("result").ToBoolSafe();
+      if (!isOk)
+      {
+        string errMsg = reponseJobj.GetKeyIgnoreCase("error").ToStringSafe();
+        string err = $"'result' property in the global total aggregate of stat '{statName}' is bad, error={errMsg}";
+        Log.Instance.Write(Log.Kind.Debug, err);
+        throw new InvalidOperationException(err);
+      }
+
+      double globalTotalAggregate = reponseJobj
+        .GetKeyIgnoreCase("globalstats").ToObjSafe()
+        .FirstOrDefault().Value
+        .GetKeyIgnoreCase("total").ToNumSafe()
+        ;
+      return (statName, globalTotalAggregate);
+    }, STATS_BATCH, 3, ct);
+
+    return results.Where(r => r != default).ToArray();
+  }
+
   public override void HandleMsg(IPacketMsg packetMsg)
   {
     // this function is called when a message arrives from the Steam network
@@ -76,16 +156,11 @@ public class UserStatsCustomHandler : ClientMsgHandler
     // the MsgType exposes the EMsg (type) of the message
     switch (packetMsg.MsgType)
     {
-      // we want to handle this message only
+      // we want to handle these messages only
       case EMsg.ClientGetUserStatsResponse:
-        HandleResponse(packetMsg);
+        Client.PostCallback(new UserStatsAndAchievementsSchemaMsg(packetMsg));
         break;
     }
-  }
-
-  void HandleResponse(IPacketMsg packetMsg)
-  {
-    Client.PostCallback(new UserStatsAndAchievementsSchemaMsg(packetMsg));
   }
 
 }
