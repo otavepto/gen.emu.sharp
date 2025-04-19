@@ -216,11 +216,29 @@ public class GseGenerator : IGenerator
       return;
     }
 
-    Directory.CreateDirectory(settingsFolder);
-    File.WriteAllLines(Path.Combine(settingsFolder, "stats.txt"), stats.Select(s =>
-      $"{s.InternalName}={s.Type.GetEnumAttribute<EnumMemberAttribute, StatType>()?.Value}={(int)s.DefaultValue}"
-    ), Utils.Utf8EncodingNoBom);
-    
+    var statsList = stats
+      .Select(s =>
+        new JsonObject
+        {
+          ["name"] = s.InternalName,
+          ["type"] = s.Type.GetEnumAttribute<EnumMemberAttribute, StatType>()?.Value,
+          ["value_default"] = (long)s.DefaultValue,
+          ["value_global"] = (long)s.GlobalTotalValue,
+          ["value_min"] = (long)s.MinValue,
+          ["value_max"] = (long)s.MaxValue,
+          ["value_will_increase_only"] = s.IsValueIncreasesOnly,
+          ["aggregated"] = s.IsAggregated,
+          ["max_changes_per_update"] = s.MaxChangesPerUpdate,
+          ["read_write_permissions"] = s.ReadWritePermissions,
+        }
+      )
+      .ToList();
+
+    if (statsList.Count != 0)
+    {
+      Directory.CreateDirectory(settingsFolder);
+      Utils.WriteJson(statsList, Path.Combine(settingsFolder, "stats.json"));
+    }
   }
 
   void SaveDepots()
@@ -263,7 +281,8 @@ public class GseGenerator : IGenerator
           ["protected"] = br.IsProtected,
           ["build_id"] = br.BuildId,
           ["time_updated"] = br.TimeUpdated,
-        }).ToList();
+        })
+      .ToList();
     if (branches.Count == 0)
     {
       Log.Instance.Write(Log.Kind.Debug, $"no branches found, adding 'public' as a branch");
