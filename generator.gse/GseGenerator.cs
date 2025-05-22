@@ -222,14 +222,8 @@ public class GseGenerator : IGenerator
         {
           ["name"] = s.InternalName,
           ["type"] = s.Type.GetEnumAttribute<EnumMemberAttribute, StatType>()?.Value,
-          ["value_default"] = (long)s.DefaultValue,
-          ["value_global"] = (long)s.GlobalTotalValue,
-          ["value_min"] = (long)s.MinValue,
-          ["value_max"] = (long)s.MaxValue,
-          ["value_will_increase_only"] = s.IsValueIncreasesOnly,
-          ["aggregated"] = s.IsAggregated,
-          ["max_changes_per_update"] = s.MaxChangesPerUpdate,
-          ["read_write_permissions"] = s.ReadWritePermissions,
+          ["default"] = s.DefaultValue.ToString(),
+          ["global"] = s.GlobalTotalValue.ToString(),
         }
       )
       .ToList();
