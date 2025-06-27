@@ -370,7 +370,19 @@ public static class Utils
       return string.Empty;
     }
 
-    return new string(filename.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+    // Windows: https://github.com/dotnet/runtime/blob/50be35a211536209b3e1d68619f7d2f2bf3caa0a/src/libraries/System.Private.CoreLib/src/System/IO/Path.Windows.cs#L15
+    // Linux: https://github.com/dotnet/runtime/blob/50be35a211536209b3e1d68619f7d2f2bf3caa0a/src/libraries/System.Private.CoreLib/src/System/IO/Path.Unix.cs#L12
+    // Windows has more invalid chars, we want to use that in case we're on NTFS partition mounted in Linux
+    static char[] WinInvalidFileNameChars() =>
+    [
+        '\"', '<', '>', '|', '\0',
+        (char)1, (char)2, (char)3, (char)4, (char)5, (char)6, (char)7, (char)8, (char)9, (char)10,
+        (char)11, (char)12, (char)13, (char)14, (char)15, (char)16, (char)17, (char)18, (char)19, (char)20,
+        (char)21, (char)22, (char)23, (char)24, (char)25, (char)26, (char)27, (char)28, (char)29, (char)30,
+        (char)31, ':', '*', '?', '\\', '/'
+    ];
+
+    return new string(filename.Where(c => !WinInvalidFileNameChars().Contains(c)).ToArray());
   }
 
   public static Tatt? GetEnumAttribute<Tatt, Tenum>(this Tenum val)
