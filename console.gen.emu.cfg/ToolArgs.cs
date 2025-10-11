@@ -150,8 +150,8 @@ public class ToolArgs
   Options? options;
   public Options GetOptions => options is not null ? options : throw new InvalidOperationException("Not parsed yet");
 
-  readonly List<uint> appids = [];
-  public IReadOnlyList<uint> GetAppIds => appids;
+  readonly HashSet<uint> appids = [];
+  public IReadOnlyList<uint> GetAppIds => appids.ToList();
 
   public string HelpText { get; private set; } = string.Empty;
 
