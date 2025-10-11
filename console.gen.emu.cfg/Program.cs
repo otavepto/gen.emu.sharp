@@ -188,6 +188,7 @@ async Task GetAllAppInfoAsync(AppInfoModel appModel)
   ParseLaunchConfigurations(appModel);
   ParseDepots(appModel);
   ParseBranches(appModel);
+  ParseUserFilesystem(appModel);
 
   if (!ToolArgs.Instance.GetOptions.SkipAdditionalInfo && !isRestoreFromBackup)
   {
@@ -245,7 +246,7 @@ async Task GetAllAppInfoAsync(AppInfoModel appModel)
 
   if (!ToolArgs.Instance.GetOptions.SkipStatsAndAchievements && !isRestoreFromBackup)
   {
-    await GetStatsAndAchievementsSchema(appModel).ConfigureAwait(false);
+    await GetStatsAndAchievementsSchemaAsync(appModel).ConfigureAwait(false);
   }
   else
   {
@@ -372,6 +373,31 @@ void ParseBranches(AppInfoModel appModel)
     Log.Instance.Write(Log.Kind.Error, $"Couldn't parse branches");
   }
 
+  Log.Instance.EndSteps(lglvl);
+}
+
+void ParseUserFilesystem(AppInfoModel appModel)
+{
+  var lglvl = Log.Instance.StartSteps("Parsing User Filesystem (UFS)");
+  try
+  {
+    var (SaveFiles, SaveFileOverrides) = UserFileSystem.Instance.ParseUserFileSystem(appModel.Product.ProductInfo);
+    appModel.UserFilesystem.SaveFiles.CopyFrom(SaveFiles);
+    appModel.UserFilesystem.SaveFileOverrides.CopyFrom(SaveFileOverrides);
+
+    if (SaveFiles.Count > 0)
+    {
+      Log.Instance.Write(Log.Kind.Success, $"Parsed [{SaveFiles.Count}] UFS entries and [{SaveFileOverrides.Count}] overrides");
+    }
+    else
+    {
+      Log.Instance.Write(Log.Kind.Warning, $"No UFS entries were found");
+    }
+  }
+  catch (Exception ex)
+  {
+    Log.Instance.WriteException(ex);
+  }
   Log.Instance.EndSteps(lglvl);
 }
 
@@ -548,7 +574,7 @@ async Task GettTopReviewersAsync(AppInfoModel appModel)
   Log.Instance.EndSteps(lglvl);
 }
 
-async Task GetStatsAndAchievementsSchema(AppInfoModel appModel)
+async Task GetStatsAndAchievementsSchemaAsync(AppInfoModel appModel)
 {
   List<ulong> ownersIds = [];
   if (!ToolArgs.Instance.GetOptions.AnonLogin)

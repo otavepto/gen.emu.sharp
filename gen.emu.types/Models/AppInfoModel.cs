@@ -3,6 +3,7 @@ using gen.emu.types.Models.Entitlements;
 using gen.emu.types.Models.Inventory;
 using gen.emu.types.Models.MediaAssets;
 using gen.emu.types.Models.StatsAndAchievements;
+using gen.emu.types.Models.UserFileSystem;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,5 +53,8 @@ public class AppInfoModel
 
   [JsonInclude]
   public MediaAssetsModel MediaAssets { get; private set; } = new();
+
+  [JsonInclude]
+  public UserFilesystemModel UserFilesystem { get; private set; } = new();
 
 }
