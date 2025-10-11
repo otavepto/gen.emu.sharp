@@ -5,6 +5,7 @@ using gen.emu.shared;
 using gen.emu.types.Generators;
 using gen.emu.types.Models;
 using gen.emu.types.Models.StatsAndAchievements;
+using gen.emu.types.Models.UserFileSystem;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -26,6 +27,10 @@ public class GseGenerator : IGenerator
     [Option("nonet", Default = false, Required = false,
       HelpText = "disable networking entirely")]
     public bool DisableNetworking { get; private set; }
+
+    [Option("noclouddirs", Default = false, Required = false,
+      HelpText = "disable creating cloud dirs")]
+    public bool NoCreateCloudDirs { get; private set; }
 
   }
 
@@ -87,7 +92,6 @@ public class GseGenerator : IGenerator
       ;
     // TODO
     return Task.CompletedTask;
-    throw new NotImplementedException();
   }
 
   public Task Setup(string basepath)
@@ -119,15 +123,17 @@ public class GseGenerator : IGenerator
     SaveSupportedLanguages();
     SaveBranches();
     SaveDlcs();
+    SaveUfs("Windows", "win");
+    SaveUfs("Linux", "linux");
     ParseAndSaveController();
     SaveStats(appInfoModel.StatsAndAchievements.Stats);
-    DisableExtraFeatures();
+    ProcessCmdlineArgs();
 
     await invTask.ConfigureAwait(false);
     
   }
 
-  private void DisableExtraFeatures()
+  private void ProcessCmdlineArgs()
   {
     if (options.DisableNetworking)
     {
@@ -137,6 +143,13 @@ public class GseGenerator : IGenerator
       mainConn["disable_sharing_stats_with_gameserver"] = ("1", "prevent sharing stats and achievements with any game server, this also disables the interface ISteamGameServerStats");
       mainConn["disable_source_query"] = ("1", "do not send server details to the server browser, only works for game servers");
       mainConn["share_leaderboards_over_network"] = ("0", "enable sharing leaderboards scores with people playing the same game on the same network");
+    }
+
+    if (options.NoCreateCloudDirs)
+    {
+      var appCloud = iniFiles.GetSection("configs.app.ini", "app::cloud_save::general");
+      appCloud["create_default_dir"] = ("0", "should the emu create the default directory for cloud saves on startup '[Steam Install]/userdata/{Steam3AccountID}/{AppID}/'");
+      appCloud["create_specific_dirs"] = ("0", "should the emu create the directories specified in the cloud saves section of the current OS on startup");
     }
 
   }
@@ -314,6 +327,179 @@ public class GseGenerator : IGenerator
     dlcSection["unlock_all"] = ("0", "should the emu report all DLCs as unlocked");
     dlcSection.CopyFrom(dlcs);
 
+  }
+
+  void SaveUfs(string platform, string iniSectionSuffix)
+  {
+    string SanitizePath(string path)
+    {
+      // appid 292930 sets "path=/"
+      path = path
+        .TrimEnd('/')
+        .TrimStart('/');
+      // appid 282800 sets "path=save/{64BitSteamID}/."
+      while (path.EndsWith("/.", StringComparison.Ordinal))
+      {
+        path = path.Remove(path.Length - 2);
+      }
+      while (path.StartsWith("./", StringComparison.Ordinal))
+      {
+        path = path.Remove(0, 2);
+      }
+
+      // remove any "/." in between
+      while (true)
+      {
+        int fidx = path.IndexOf("/./", StringComparison.Ordinal);
+        if (fidx < 0)
+        {
+          break;
+        }
+        path = path.Remove(fidx, 2);
+      }
+
+      if (".".Equals(path, StringComparison.Ordinal))
+      {
+        return string.Empty;
+      }
+
+      return path;
+    }
+
+    string FixupVars(string path)
+    {
+      return path
+        .Replace("{64BitSteamID}", "{::64BitSteamID::}", StringComparison.OrdinalIgnoreCase)
+        .Replace("{Steam3AccountID}", "{::Steam3AccountID::}", StringComparison.OrdinalIgnoreCase);
+    }
+
+    if (appInfoModel.UserFilesystem.SaveFiles.Count == 0)
+    {
+      return;
+    }
+
+    (List<SaveFileModel> SaveFiles, List<SaveFileOverrideModel> SaveFileOverrides) ufs =
+      new(new List<SaveFileModel>(), new List<SaveFileOverrideModel>());
+
+    // add base save files
+    foreach (var item in appInfoModel.UserFilesystem.SaveFiles)
+    {
+      if (item.Platforms.Count == 0) // all platforms
+      {
+        ufs.SaveFiles.Add(item);
+      }
+      else if (item.Platforms.Any(p => "all".Equals(p, StringComparison.OrdinalIgnoreCase)))
+      {
+        // appid 130 and appid 50 use "all"
+        ufs.SaveFiles.Add(item);
+      }
+      else if (item.Platforms.Any(p => platform.Equals(p, StringComparison.OrdinalIgnoreCase)))
+      {
+        ufs.SaveFiles.Add(item);
+      }
+    }
+
+    // add overrides
+    foreach (var item in appInfoModel.UserFilesystem.SaveFileOverrides)
+    {
+      if (item.Platform.Equals(platform, StringComparison.OrdinalIgnoreCase))
+      {
+        ufs.SaveFileOverrides.Add(item);
+      }
+    }
+
+    // format the root identifiers like this:
+    // {SteamCloudDocuments} >> {::SteamCloudDocuments::}
+    // this char ':' is illegal on all OSes and fails to create a dir
+    // if any idetifier was not substituted
+    // some games like appid 388880 have broken config, the emu can
+    // then easily detect that by looking for the pattern "::" or "{::"
+    // and decide the appropriate action to take
+
+    var paths = new HashSet<string>();
+    // if we have overrides then only use them
+    if (ufs.SaveFileOverrides.Count > 0)
+    {
+      foreach (var ufsOverride in ufs.SaveFileOverrides)
+      {
+        string newPath = $"{{::{ufsOverride.RootNew.Trim()}::}}";
+        string pathAfterRootNew = SanitizePath(ufsOverride.PathAfterRootNew);
+        if (!string.IsNullOrEmpty(pathAfterRootNew))
+        {
+          newPath += $"/{pathAfterRootNew}";
+        }
+
+        var saveFilesToOverride = ufs.SaveFiles
+          .Where(save => save.Root.Equals(ufsOverride.RootOriginal, StringComparison.OrdinalIgnoreCase));
+        foreach (var saveFile in saveFilesToOverride)
+        {
+          string pathAfterRootOriginal = saveFile.PathAfterRoot.Replace("\\", "/", StringComparison.OrdinalIgnoreCase);
+          foreach (var (Find, Replace) in ufsOverride.PathsToTransform)
+          {
+            string find = Find.Replace("\\", "/", StringComparison.OrdinalIgnoreCase);
+            string replace = Replace.Replace("\\", "/", StringComparison.OrdinalIgnoreCase);
+            if (!string.IsNullOrEmpty(find) && !string.IsNullOrEmpty(pathAfterRootOriginal))
+            {
+              // StringComparison.InvariantCultureIgnoreCase might produce unexpected results here
+              // but devs might make a mistake, not sure how Steam does it
+              pathAfterRootOriginal = pathAfterRootOriginal.Replace(find, replace, StringComparison.OrdinalIgnoreCase);
+            }
+            else if (string.IsNullOrEmpty(find) && string.IsNullOrEmpty(pathAfterRootOriginal))
+            {
+              // when "override.find" and "root.path" are both empty
+              // it is expected to use the replace string directly
+              // example: appid 2174720
+              pathAfterRootOriginal = replace;
+            }
+            else
+            {
+              Log.Instance.Write(
+                Log.Kind.Warning,
+                $"UFS override for {saveFile.Root}@{ufsOverride.Platform} >> {ufsOverride.RootNew} has empty 'find' string, " +
+                $"or original UFS has empty 'path' string, ignoring"
+              );
+            }
+          }
+
+          pathAfterRootOriginal = SanitizePath(pathAfterRootOriginal);
+          if (!string.IsNullOrEmpty(pathAfterRootOriginal))
+          {
+            newPath += $"/{pathAfterRootOriginal}";
+          }
+
+          paths.Add(FixupVars(newPath));
+        }
+      }
+    }
+    else // otherwise (no overrides) use all relevant UFS entries
+    {
+      foreach (var saveFile in ufs.SaveFiles)
+      {
+        string newPath = $"{{::{saveFile.Root.Trim()}::}}";
+        string pathAfterRoot = SanitizePath(saveFile.PathAfterRoot);
+        if (!string.IsNullOrEmpty(pathAfterRoot))
+        {
+          newPath += $"/{pathAfterRoot}";
+        }
+
+        paths.Add(FixupVars(newPath));
+      }
+    }
+
+    if (paths.Count == 0)
+    {
+      return;
+    }
+
+    var pathsMap = paths
+      .Select((p, idx) =>
+        new KeyValuePair<string, (string, string?)>(
+          $"dir{idx + 1}", (p, null)
+        )
+      );
+
+    var cloudSavesSection = iniFiles.GetSection("configs.app.ini", $"app::cloud_save::{iniSectionSuffix}");
+    cloudSavesSection.CopyFrom(pathsMap);
   }
 
   readonly static string[] supported_controllers_types = [ // in order of preference
