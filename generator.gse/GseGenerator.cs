@@ -1148,8 +1148,10 @@ public class GseGenerator : IGenerator
         ["name"] = ach.InternalName,
         ["hidden"] = ach.IsHidden ? 1 : 0,
 
-        ["icon"] = $"{ACHIEVEMENT_IMAGE_FOLDER_NAME}/{iconUnlockedName}",
-        ["icon_gray"] = $"{ACHIEVEMENT_IMAGE_FOLDER_NAME}/{ACHIEVEMENT_IMAGE_LOCKED_FOLDER_NAME}/{iconLockedName}",
+        ["icon"] =
+          Path.Combine(ACHIEVEMENT_IMAGE_FOLDER_NAME, iconUnlockedName).Replace('\\', '/'),
+        ["icon_gray"] =
+          Path.Combine(ACHIEVEMENT_IMAGE_FOLDER_NAME, ACHIEVEMENT_IMAGE_LOCKED_FOLDER_NAME, iconLockedName).Replace('\\', '/'),
 
         ["displayName"] = ach.FriendlyNameTranslations.DeepClone(),
         ["description"] = ach.DescriptionTranslations.DeepClone(),
