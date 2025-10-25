@@ -676,7 +676,9 @@ public class GseGenerator : IGenerator
     {
       var preset_name = presetObj.GetKeyIgnoreCase("name").ToStringSafe();
       // find this preset in the parsed actions list
-      if (!supported_actions_list.Contains(preset_name.ToUpperInvariant()) && !preset_name.Equals("default", StringComparison.OrdinalIgnoreCase))
+      if (supported_actions_list.Count > 0 && // when the actions list is absent, we allow everything
+        !supported_actions_list.Contains(preset_name.ToUpperInvariant()) &&
+        !preset_name.Equals("default", StringComparison.OrdinalIgnoreCase))
       {
         continue;
       }
@@ -995,7 +997,10 @@ public class GseGenerator : IGenerator
 
                           if (action_name is null)
                           {
-                            Log.Instance.Write(Log.Kind.Debug, $"unsupported binding type '{binding_type}' in button '{current_btn_name}' (group/.../activators/Full_Press/bindings/binding/['<BINDING_TYPE> ...'])");
+                            Log.Instance.Write(Log.Kind.Debug,
+                              $"unsupported binding type '{binding_type}' in group inputs binding " +
+                              $"(group[id={group.GetKeyIgnoreCase("id").ToNumSafe()}]/inputs/'{current_btn_name}'/.../activators/Full_Press/bindings/binding/'{string.Join(", ", binding_instructions)}')"
+                            );
                             continue;
                           }
 
