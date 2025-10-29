@@ -417,7 +417,7 @@ public class GseGenerator : IGenerator
       foreach (var ufsOverride in ufs.SaveFileOverrides)
       {
         string newPath = $"{{::{ufsOverride.RootNew.Trim()}::}}";
-        string pathAfterRootNew = SanitizePath(ufsOverride.PathAfterRootNew);
+        string pathAfterRootNew = SanitizePath(ufsOverride.PathAfterRootNew.Replace("\\", "/", StringComparison.Ordinal));
         if (!string.IsNullOrEmpty(pathAfterRootNew))
         {
           newPath += $"/{pathAfterRootNew}";
@@ -427,11 +427,12 @@ public class GseGenerator : IGenerator
           .Where(save => save.Root.Equals(ufsOverride.RootOriginal, StringComparison.OrdinalIgnoreCase));
         foreach (var saveFile in saveFilesToOverride)
         {
-          string pathAfterRootOriginal = saveFile.PathAfterRoot.Replace("\\", "/", StringComparison.OrdinalIgnoreCase);
+          // don't sanitize "save_file.path_after_root" yet, we need to find and replace substrings
+          string pathAfterRootOriginal = saveFile.PathAfterRoot.Replace("\\", "/", StringComparison.Ordinal);
           foreach (var (Find, Replace) in ufsOverride.PathsToTransform)
           {
-            string find = Find.Replace("\\", "/", StringComparison.OrdinalIgnoreCase);
-            string replace = Replace.Replace("\\", "/", StringComparison.OrdinalIgnoreCase);
+            string find = Find.Replace("\\", "/", StringComparison.Ordinal);
+            string replace = Replace.Replace("\\", "/", StringComparison.Ordinal);
             if (!string.IsNullOrEmpty(find) && !string.IsNullOrEmpty(pathAfterRootOriginal))
             {
               // StringComparison.InvariantCultureIgnoreCase might produce unexpected results here
@@ -470,7 +471,7 @@ public class GseGenerator : IGenerator
       foreach (var saveFile in ufs.SaveFiles)
       {
         string newPath = $"{{::{saveFile.Root.Trim()}::}}";
-        string pathAfterRoot = SanitizePath(saveFile.PathAfterRoot);
+        string pathAfterRoot = SanitizePath(saveFile.PathAfterRoot.Replace("\\", "/", StringComparison.Ordinal));
         if (!string.IsNullOrEmpty(pathAfterRoot))
         {
           newPath += $"/{pathAfterRoot}";
