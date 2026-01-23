@@ -288,7 +288,7 @@ public class AppStats
   List<AchievementModel> ParseAchievements(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs)
   {
     var achs = statsObjs
-      .Where(kv => VdfStatType.Map == (VdfStatType)kv.Value.GetKeyIgnoreCase("type").ToNumSafe())
+      .Where(kv => "ACHIEVEMENTS" == kv.Value.GetKeyIgnoreCase("type").ToStringSafe())
       .SelectMany(kv => kv.Value.GetKeyIgnoreCase("bits").ToObjSafe());
 
     List<AchievementModel> results = [];
