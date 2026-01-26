@@ -153,23 +153,46 @@ public class AppStats
 
       var statType = (int)statObj.GetKeyIgnoreCase("type").ToNumSafe();
       StatType? type = null;
-      switch ((VdfStatType)statType)
+      if (statType == 0)
       {
-        case VdfStatType.Int:
-          type = StatType.Int;
-          break;
-        case VdfStatType.Float:
-          type = StatType.Float;
-          break;
-        case VdfStatType.AverageRate:
-          type = StatType.AverageRate;
-          break;
-        case VdfStatType.Map:
-          // ignored
-          break;
-        default:
-          Log.Instance.Write(Log.Kind.Error, $"Unknown stat type {statType}");
-          break;
+        var statTypeStr = statObj.GetKeyIgnoreCase("type").ToStringSafe();
+        switch (statTypeStr)
+        {
+          case "INT":
+            type = StatType.Int;
+            break;
+          case "FLOAT":
+              type = StatType.Float;
+              break;
+          case "AVGRATE":
+            type = StatType.AverageRate;
+            break;
+          case "MAP":
+            // ignored
+            break;
+          default:
+            Log.Instance.Write(Log.Kind.Error, $"Unknown stat type {statTypeStr}");
+            break;
+        }
+      }else{
+        switch ((VdfStatType)statType)
+        {
+          case VdfStatType.Int:
+            type = StatType.Int;
+            break;
+          case VdfStatType.Float:
+            type = StatType.Float;
+            break;
+          case VdfStatType.AverageRate:
+            type = StatType.AverageRate;
+            break;
+          case VdfStatType.Map:
+            // ignored
+            break;
+          default:
+            Log.Instance.Write(Log.Kind.Error, $"Unknown stat type {statType}");
+            break;
+        }
       }
 
       if (type is null) // unsupported type
