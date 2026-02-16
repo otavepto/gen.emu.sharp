@@ -13,6 +13,7 @@ using common.utils.Logging;
 using gen.emu.shared;
 using gen.emu.cfg.SteamNetwork.CustomMsgHandler;
 using gen.emu.cfg.SteamNetwork;
+using System.Text.Json;
 
 namespace gen.emu.cfg;
 
@@ -25,8 +26,84 @@ public class AppStats
   {
     Int = 1,
     Float = 2,
-    AverageRate = 3,
+    AverageRate = 3, // used by appids: 480, 500, 207140
     Map = 4, // achievements
+  }
+
+  static bool TryParseStatType(JsonNode? obj, out VdfStatType statType)
+  {
+    if (obj is null)
+    {
+      statType = default;
+      return false;
+    }
+
+    bool TryParseFromNum(out VdfStatType statType)
+    {
+      if (!double.TryParse(obj.ToString() ?? string.Empty, CultureInfo.InvariantCulture, out var num) || double.IsNaN(num))
+      {
+        statType = default;
+        return false;
+      }
+      switch ((VdfStatType)num)
+      {
+        case VdfStatType.Int:
+        case VdfStatType.Float:
+        case VdfStatType.AverageRate:
+        case VdfStatType.Map:
+          statType = (VdfStatType)num;
+          return true;
+        default:
+          statType = default;
+          return false;
+      }
+    }
+
+    bool TryParseFromStr(out VdfStatType statType)
+    {
+      switch (obj.ToString().Trim().ToUpperInvariant())
+      {
+        case "INT":
+          statType = VdfStatType.Int;
+          break;
+        case "FLOAT":
+          statType = VdfStatType.Float;
+          break;
+        case "AVGRATE":
+          statType = VdfStatType.AverageRate;
+          break;
+        case "ACHIEVEMENTS":
+          statType = VdfStatType.Map;
+          break;
+        default:
+          statType = default;
+          return false;
+      }
+
+      return true;
+    }
+
+    switch (obj.GetValueKind())
+    {
+      case JsonValueKind.Number:
+        return TryParseFromNum(out statType);
+
+      case JsonValueKind.String:
+      {
+        if (TryParseFromNum(out statType))
+        {
+          return true;
+        }
+        if (TryParseFromStr(out statType))
+        {
+          return true;
+        }
+      }
+      break;
+    }
+
+    statType = default;
+    return false;
   }
 
   public async Task<(
@@ -151,9 +228,14 @@ public class AppStats
         continue;
       }
 
-      var statType = (int)statObj.GetKeyIgnoreCase("type").ToNumSafe();
+      var statTypeProp = statObj.GetKeyIgnoreCase("type");
+      if (!TryParseStatType(statTypeProp, out var statType))
+      {
+        Log.Instance.Write(Log.Kind.Error, $"Unknown stat type '{statTypeProp}'");
+        continue;
+      }
       StatType? type = null;
-      switch ((VdfStatType)statType)
+      switch (statType)
       {
         case VdfStatType.Int:
           type = StatType.Int;
@@ -168,7 +250,7 @@ public class AppStats
           // ignored
           break;
         default:
-          Log.Instance.Write(Log.Kind.Error, $"Unknown stat type {statType}");
+          Log.Instance.Write(Log.Kind.Error, $"Unknown stat type '{statTypeProp}'");
           break;
       }
 
@@ -288,7 +370,7 @@ public class AppStats
   List<AchievementModel> ParseAchievements(IEnumerable<KeyValuePair<string, JsonNode?>> statsObjs)
   {
     var achs = statsObjs
-      .Where(kv => VdfStatType.Map == (VdfStatType)kv.Value.GetKeyIgnoreCase("type").ToNumSafe())
+      .Where(kv => TryParseStatType(kv.Value.GetKeyIgnoreCase("type"), out var statType) && VdfStatType.Map == statType)
       .SelectMany(kv => kv.Value.GetKeyIgnoreCase("bits").ToObjSafe());
 
     List<AchievementModel> results = [];
