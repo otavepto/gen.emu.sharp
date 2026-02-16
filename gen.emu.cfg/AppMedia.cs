@@ -196,10 +196,15 @@ public class AppMedia
         Name: vobj.GetKeyIgnoreCase("name").ToStringSafe(),
         UrlWebm480: vobj.GetKeyIgnoreCase("webm", "480").ToStringSafe(),
         UrlMp4480: vobj.GetKeyIgnoreCase("mp4", "480").ToStringSafe()
+        // UrlHlsH264: vobj.GetKeyIgnoreCase("hls_h264").ToStringSafe()
       ))
-      .Where(item => item.UrlMp4480.Length > 0 || item.UrlWebm480.Length > 0);
+      .Where(item =>
+        item.UrlWebm480.Length > 0
+        || item.UrlMp4480.Length > 0
+        // || item.UrlHlsH264.Length > 0
+      );
     
-    (ulong Id, string Name, string UrlWebm480, string UrlMp4480)? vid = null;
+    (ulong Id, string Name, string UrlWebm480, string UrlMp4480/*, string UrlHlsH264*/)? vid = null;
     foreach (var item in vidsArr)
     {
       vid ??= item;
