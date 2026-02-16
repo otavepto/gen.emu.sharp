@@ -22,12 +22,14 @@ public class AppInfoModel
   public ExtendedEntitlementModel Product { get; private set; } = new();
 
   [JsonInclude]
-  public IReadOnlyList<string> SupportedLanguages { get; private set; } = new List<string>();
+  public IReadOnlyList<string> SupportedLanguages { get; private set; } =
+    new List<string>();
 
   public JsonObject LaunchConfigurations { get; set; } = new();
 
   [JsonInclude]
-  public IReadOnlyDictionary<uint, ExtendedEntitlementModel> Demos { get; private set; } = new Dictionary<uint, ExtendedEntitlementModel>();
+  public IReadOnlyDictionary<uint, ExtendedEntitlementModel> Demos { get; private set; } =
+    new Dictionary<uint, ExtendedEntitlementModel>();
 
   [JsonInclude]
   public AppDepotsModel Depots { get; private set; } = new();

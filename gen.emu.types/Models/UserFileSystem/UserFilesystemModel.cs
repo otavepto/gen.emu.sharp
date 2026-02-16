@@ -10,9 +10,11 @@ namespace gen.emu.types.Models.UserFileSystem;
 public class UserFilesystemModel
 {
   [JsonInclude]
-  public IReadOnlyList<SaveFileModel> SaveFiles { get; private set; } = new List<SaveFileModel>();
+  public IReadOnlyList<SaveFileModel> SaveFiles { get; private set; } =
+    new List<SaveFileModel>();
 
   [JsonInclude]
-  public IReadOnlyList<SaveFileOverrideModel> SaveFileOverrides { get; private set; } = new List<SaveFileOverrideModel>();
+  public IReadOnlyList<SaveFileOverrideModel> SaveFileOverrides { get; private set; } =
+    new List<SaveFileOverrideModel>();
 
 }

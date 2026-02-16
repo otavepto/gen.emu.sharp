@@ -17,11 +17,11 @@ public class ControllerInfoModel
   public string ControllerType { get; set; } = string.Empty;
 
   [JsonInclude]
-  public IReadOnlyList<string> EnabledBranches { get; private set; } = new List<string>();
+  public IReadOnlyList<string> EnabledBranches { get; private set; } =
+    new List<string>();
 
   public bool UseActionBlock { get; set; }
 
   public JsonObject VdfData { get; set; } = new();
-
 
 }
