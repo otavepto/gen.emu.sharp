@@ -1165,7 +1165,24 @@ public class GseGenerator : IGenerator
       };
       if (ach.ProgressDetails is not null)
       {
-        obj["progress"] = ach.ProgressDetails.DeepClone();
+        var progressJsonNode = ach.ProgressDetails.DeepClone();
+        if (progressJsonNode.GetValueKind() == JsonValueKind.Object)
+        {
+          var progressObj = progressJsonNode.AsObject();
+          if (progressObj.TryGetPropertyValue("min_val", out var minValJsonNode))
+          {
+            progressObj["min_val"] = minValJsonNode?.ToString();
+          }
+          if (progressObj.TryGetPropertyValue("max_val", out var maxValJsonNode))
+          {
+            progressObj["max_val"] = maxValJsonNode?.ToString();
+          }
+        }
+        else
+        {
+          Log.Instance.Write(Log.Kind.Error, $"achievement '{ach.InternalName}' progress details is found, but it's not a JSON object");
+        }
+        obj["progress"] = progressJsonNode;
       }
 
       achs.Add(obj);
