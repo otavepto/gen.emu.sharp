@@ -19,7 +19,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
 
     - name: Restore dependencies
       run: dotnet restore
@@ -32,9 +32,9 @@ jobs:
     
     - name: Archive Linux x64
       run: |
-        tar -czf gen.emu.sharp-linux.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" linux-x64/ || exit 1
-        tar -czf console.vdf.parser-linux.x64.tar.gz -C "console.vdf.parser/bin/Release/net8.0/publish/" linux-x64/ || exit 1
-        tar -czf console.stats.schema-linux.x64.tar.gz -C "console.stats.schema/bin/Release/net8.0/publish/" linux-x64/ || exit 1
+        tar -czf gen.emu.sharp-linux.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/publish/" linux-x64/ || exit 1
+        tar -czf console.vdf.parser-linux.x64.tar.gz -C "console.vdf.parser/bin/Release/publish/" linux-x64/ || exit 1
+        tar -czf console.stats.schema-linux.x64.tar.gz -C "console.stats.schema/bin/Release/publish/" linux-x64/ || exit 1
 
     - name: Upload Linux x64 (gen.emu.sharp)
       uses: actions/upload-artifact@v4
@@ -68,9 +68,9 @@ jobs:
 
     - name: Archive Windows x64
       run: |
-        tar -czf gen.emu.sharp-win.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/net8.0/publish/" win-x64/ || exit 1
-        tar -czf console.vdf.parser-win.x64.tar.gz -C "console.vdf.parser/bin/Release/net8.0/publish/" win-x64/ || exit 1
-        tar -czf console.stats.schema-win.x64.tar.gz -C "console.stats.schema/bin/Release/net8.0/publish/" win-x64/ || exit 1
+        tar -czf gen.emu.sharp-win.x64.tar.gz -C "console.gen.emu.cfg/bin/Release/publish/" win-x64/ || exit 1
+        tar -czf console.vdf.parser-win.x64.tar.gz -C "console.vdf.parser/bin/Release/publish/" win-x64/ || exit 1
+        tar -czf console.stats.schema-win.x64.tar.gz -C "console.stats.schema/bin/Release/publish/" win-x64/ || exit 1
 
     - name: Upload Windows x64 (gen.emu.sharp)
       uses: actions/upload-artifact@v4
