@@ -40,7 +40,7 @@ public class AppStats
 
     bool TryParseFromNum(out VdfStatType statType)
     {
-      if (!double.TryParse(obj.ToString() ?? string.Empty, CultureInfo.InvariantCulture, out var num) || double.IsNaN(num))
+      if (!obj.TryConvertToNum(out var num))
       {
         statType = default;
         return false;
@@ -89,20 +89,104 @@ public class AppStats
         return TryParseFromNum(out statType);
 
       case JsonValueKind.String:
-      {
-        if (TryParseFromNum(out statType))
         {
-          return true;
+          if (TryParseFromNum(out statType))
+          {
+            return true;
+          }
+          if (TryParseFromStr(out statType))
+          {
+            return true;
+          }
         }
-        if (TryParseFromStr(out statType))
-        {
-          return true;
-        }
-      }
-      break;
+        break;
     }
 
     statType = default;
+    return false;
+  }
+
+  static bool TryParseStatNumericValue(JsonNode? statVal, out double val)
+  {
+    if (statVal is null)
+    {
+      val = double.NaN;
+      return false;
+    }
+    switch (statVal.GetValueKind())
+    {
+      case JsonValueKind.Number:
+      case JsonValueKind.True:
+      case JsonValueKind.False:
+        val = statVal.ToNumSafe();
+        return true;
+      case JsonValueKind.String:
+        {
+          var statValStr = statVal.ToStringSafe()
+            .Normalize(NormalizationForm.FormKC) // appid 971620 (uses FULLWIDTH DIGIT ZERO "\uFF10")
+            .Trim().ToUpperInvariant()
+            .Replace("O", "0", StringComparison.InvariantCultureIgnoreCase) // appid 1951780
+            ;
+
+          // ---
+          // NOTE: from this point onwards the char 'O' is replaced with the number '0'
+          // ---
+
+          int mathSign = statValStr.Length > 0 && statValStr[0] == '-'
+            ? -1
+            : 1;
+          if (mathSign == -1)
+          {
+            statValStr = statValStr.Substring(1);
+          }
+          if (new[] {"INT_MIN", "MIN_INT"}.Contains(statValStr)) // appid 2218320, 3262610
+          {
+            val = int.MinValue * mathSign;
+            return true;
+          }
+          else if (new[] {"INT_MAX", "MAX_INT"}.Contains(statValStr)) // appid 2218320, 3262610
+          {
+            val = int.MaxValue * mathSign;
+            return true;
+          }
+          // --- notice how the word "FLOAT" is written with a '0' -> "FL0AT"
+          else if (new[] {"FL0AT_MIN", "FLT_MIN", "MIN_FL0AT", "MIN_FLT"}.Contains(statValStr)) // appid 3262610, 2721750
+          {
+            val = float.MinValue * mathSign;
+            return true;
+          }
+          else if (new[] {"FL0AT_MAX", "FLT_MAX", "MAX_FL0AT", "MAX_FLT"}.Contains(statValStr)) // appid 3262610, 2721750
+          {
+            val = float.MaxValue * mathSign;
+            return true;
+          }
+          // ---
+          else if ("INF" == statValStr) // appid 3082220
+          {
+            val = mathSign == -1
+              ? float.NegativeInfinity
+              : float.PositiveInfinity;
+            return true;
+          }
+          else if (JsonValue.Create(statValStr).TryConvertToNum(out val)) // appid 2721750 ("0.0")
+          {
+            val *= mathSign;
+            return true;
+          }
+          else if (statValStr.Length >= 3 && statValStr.Substring(0, 2) == "0X") // appid 1402320 ("0x7FFFFFFF")
+          {
+            if (long.TryParse(
+              statValStr.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hexVal
+            ))
+            {
+              val = hexVal * mathSign;
+              return true;
+            }
+          }
+        }
+        break;
+    }
+    val = double.NaN;
     return false;
   }
 
@@ -259,11 +343,18 @@ public class AppStats
         continue;
       }
 
+      var defaultProp = statObj.GetKeyIgnoreCase("default");
+      double defaultStatValue = 0;
+      if (defaultProp is not null && !TryParseStatNumericValue(defaultProp, out defaultStatValue)) // appid 1520330 doesn't have a default value for some stats
+      {
+        defaultStatValue = 0;
+        Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' default value '{defaultProp}' is not convertible to a number");
+      }
       StatModel stat = new()
       {
         InternalName = name,
         FriendlyDisplayName = statObj.GetKeyIgnoreCase("display", "name").ToStringSafe(),
-        DefaultValue = statObj.GetKeyIgnoreCase("default").ToNumSafe(),
+        DefaultValue = defaultStatValue,
         Type = type.Value,
         IsValueIncreasesOnly = statObj.GetKeyIgnoreCase("incrementonly").ToBoolSafe(),
         IsAggregated = statObj.GetKeyIgnoreCase("aggregated").ToBoolSafe(),
@@ -286,7 +377,11 @@ public class AppStats
         var maxProp = statObj.GetKeyIgnoreCase("max");
         if (maxProp is not null)
         {
-          var maxValue = maxProp.ToNumSafe();
+          if (!TryParseStatNumericValue(maxProp, out double maxValue))
+          {
+            maxValue = 0;
+            Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' max value '{maxProp}' is not convertible to a number");
+          }
           stat.DefaultValue = Math.Min(stat.DefaultValue, maxValue);
           stat.MaxValue = maxValue;
         }
@@ -296,7 +391,11 @@ public class AppStats
         var minProp = statObj.GetKeyIgnoreCase("min");
         if (minProp is not null)
         {
-          var minValue = minProp.ToNumSafe();
+          if (!TryParseStatNumericValue(minProp, out double minValue))
+          {
+            minValue = 0;
+            Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' min value '{minProp}' is not convertible to a number");
+          }
           stat.DefaultValue = Math.Max(stat.DefaultValue, minValue);
           stat.MinValue = minValue;
         }
