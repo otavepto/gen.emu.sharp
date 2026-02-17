@@ -299,7 +299,7 @@ public class GseGenerator : IGenerator
       .ToList();
     if (branches.Count == 0)
     {
-      Log.Instance.Write(Log.Kind.Debug, $"no branches found, adding 'public' as a branch");
+      Log.Instance.Write(Log.Kind.Debug, $"no branches found, adding a dummy 'public' branch");
       branches.Add(new JsonObject
       {
         ["name"] = "public",
@@ -1174,7 +1174,7 @@ public class GseGenerator : IGenerator
     Directory.CreateDirectory(settingsFolder);
     Utils.WriteJson(achs, Path.Combine(settingsFolder, "achievements.json"));
 
-    if (needDefaultIconUnlocked )
+    if (needDefaultIconUnlocked)
     {
       Log.Instance.Write(Log.Kind.Debug, $"one of the achievements is missing unlocked icon, adding default one");
       Directory.CreateDirectory(achievementsImagesFolder);
