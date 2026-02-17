@@ -164,16 +164,20 @@ public class Auth
     // key size of 256 bits
     aes.KeySize = 256;
     aes.BlockSize = 128;
-
-    using (var keyGenerator = new Rfc2898DeriveBytes(
-        password,
-        Encoding.UTF8.GetBytes(SALT),
-        10000, // iterations count
-        HashAlgorithmName.SHA512))
-    {
-      aes.Key = keyGenerator.GetBytes(aes.KeySize / 8);
-      aes.IV = keyGenerator.GetBytes(aes.BlockSize / 8);
-    }
+    aes.Key = Rfc2898DeriveBytes.Pbkdf2(
+      password,
+      Encoding.UTF8.GetBytes(SALT),
+      10000, // iterations count
+      HashAlgorithmName.SHA512,
+      aes.KeySize / 8
+    );
+    aes.IV = Rfc2898DeriveBytes.Pbkdf2(
+      password,
+      Encoding.UTF8.GetBytes(SALT),
+      10000, // iterations count
+      HashAlgorithmName.SHA512,
+      aes.BlockSize / 8
+    );
 
     using var memoryStream = new MemoryStream();
     // write the initialization vector
@@ -201,15 +205,13 @@ public class Auth
     // key size of 256 bits
     aes.KeySize = 256;
     aes.BlockSize = 128;
-
-    using (var keyGenerator = new Rfc2898DeriveBytes(
-        password,
-        Encoding.UTF8.GetBytes(SALT),
-        10000, // iterations count
-        HashAlgorithmName.SHA512))
-    {
-      aes.Key = keyGenerator.GetBytes(aes.KeySize / 8);
-    }
+    aes.Key = Rfc2898DeriveBytes.Pbkdf2(
+      password,
+      Encoding.UTF8.GetBytes(SALT),
+      10000, // iterations count
+      HashAlgorithmName.SHA512,
+      aes.KeySize / 8
+    );
 
     var encryptedCompressedData = Convert.FromBase64String(encryptedCompressedDataBase64);
     using var memoryStream = new MemoryStream(encryptedCompressedData);
