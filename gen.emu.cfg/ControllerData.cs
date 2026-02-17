@@ -83,7 +83,7 @@ public class ControllerData
         method: Utils.WebMethod.Get,
         cancelToken: ct
       ).ConfigureAwait(false);
-      
+
       if (data is null || data.Length == 0)
       {
         throw new InvalidDataException($"Bad response for controller published file: {item.publishedfileid}");
@@ -97,18 +97,22 @@ public class ControllerData
 
     foreach (var (publishedFileId, vdfData, filename) in results)
     {
+      if (vdfData is null || vdfData.Length == 0 || string.IsNullOrEmpty(filename))
+      {
+        continue;
+      }
+
       var target = controllersDetails[publishedFileId];
       target.Filename = filename;
-
 
       using (var vdfStream = new MemoryStream(vdfData, false))
       {
         target.VdfData = Helpers.LoadVdf(vdfStream, Helpers.VdfType.Text);
       }
-
     }
 
-    return controllersDetails.Select(kv => kv.Value);
+    return controllersDetails.Select(kv => kv.Value)
+      .Where(cm => cm.VdfData.Count > 0);
   }
 
 }
