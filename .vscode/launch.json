@@ -14,6 +14,24 @@
             "args": [
                 "-v", "--icons", "--imgs", "--scrn", "--thumbs", "--vid", "--invicons", "--inviconslarge", "--nonet",
                 "420", "480", "730", "270880", "271590", "282800", "1091500", "1702330", "2668510",
+                // --- weird stats values
+                "2069250",
+                "1951780",
+                "1520330",
+                "412050",
+                "2218320",
+                "3262610",
+                "2721750",
+                "971620",
+                "3082220",
+                "1892030",
+                "1491850",
+                "3978190",
+                "2911590",
+                "1402320",
+                "381750",
+                "3811350",
+                // ---
             ],
             "cwd": "${workspaceFolder}/console.gen.emu.cfg",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
