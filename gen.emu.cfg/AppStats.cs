@@ -164,8 +164,8 @@ public class AppStats
           else if ("INF" == statValStr) // appid 3082220
           {
             val = mathSign == -1
-              ? float.NegativeInfinity
-              : float.PositiveInfinity;
+              ? double.NegativeInfinity
+              : double.PositiveInfinity;
             return true;
           }
           else if (JsonValue.Create(statValStr).TryConvertToNum(out val)) // appid 2721750 ("0.0")
@@ -343,12 +343,17 @@ public class AppStats
         continue;
       }
 
-      var defaultProp = statObj.GetKeyIgnoreCase("default");
+      bool hasDefaultValue = false;
       double defaultStatValue = 0;
-      if (defaultProp is not null && !TryParseStatNumericValue(defaultProp, out defaultStatValue)) // appid 1520330 doesn't have a default value for some stats
+      var defaultProp = statObj.GetKeyIgnoreCase("default");
+      if (defaultProp is not null) // appid 1520330 doesn't have a default value for some stats
       {
-        defaultStatValue = 0;
-        Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' default value '{defaultProp}' is not convertible to a number");
+        hasDefaultValue = true;
+        if (!TryParseStatNumericValue(defaultProp, out defaultStatValue))
+        {
+          defaultStatValue = 0;
+          Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' default value '{defaultProp}' is not convertible to a number");
+        }
       }
       StatModel stat = new()
       {
@@ -373,17 +378,17 @@ public class AppStats
       }
 
       {
-        // fixup default value, <= max and >= min
-        var maxProp = statObj.GetKeyIgnoreCase("max");
-        if (maxProp is not null)
+        var maxChangesProp = statObj.GetKeyIgnoreCase("maxchange");
+        if (maxChangesProp is not null)
         {
-          if (!TryParseStatNumericValue(maxProp, out double maxValue))
+          if (TryParseStatNumericValue(maxChangesProp, out double maxChangesValue))
           {
-            maxValue = 0;
-            Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' max value '{maxProp}' is not convertible to a number");
+            stat.MaxChangesPerUpdate = (int)maxChangesValue;
           }
-          stat.DefaultValue = Math.Min(stat.DefaultValue, maxValue);
-          stat.MaxValue = maxValue;
+          else
+          {
+            Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' max changes per value '{maxChangesProp}' is not convertible to a number");
+          }
         }
       }
 
@@ -396,17 +401,44 @@ public class AppStats
             minValue = 0;
             Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' min value '{minProp}' is not convertible to a number");
           }
-          stat.DefaultValue = Math.Max(stat.DefaultValue, minValue);
           stat.MinValue = minValue;
         }
       }
 
       {
-        var maxChangesProp = statObj.GetKeyIgnoreCase("maxchange");
-        if (maxChangesProp is not null)
+        // fixup default value, <= max and >= min
+        var maxProp = statObj.GetKeyIgnoreCase("max");
+        if (maxProp is not null)
         {
-          stat.MaxChangesPerUpdate = (int)maxChangesProp.ToNumSafe();
+          if (!TryParseStatNumericValue(maxProp, out double maxValue))
+          {
+            maxValue = 0;
+            Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' max value '{maxProp}' is not convertible to a number");
+          }
+          stat.MaxValue = maxValue;
         }
+        else if (stat.MaxChangesPerUpdate > 0) // appid 381750 stat "NumRacesTOTAL" defines "min" prop and "maxchange", but not "max"
+        {
+          stat.MaxValue = stat.MinValue + stat.MaxChangesPerUpdate;
+        }
+      }
+
+      // sanity check, this happens in appid 1892030 for example because
+      // stat "INFLUENCE": min = "0,001", max = undefined
+      // that string is translated to (int)1 while max stays 0 (the default)
+      if (
+        !double.IsNaN(stat.MaxValue) && !double.IsNaN(stat.MinValue) &&
+        stat.MaxValue < stat.MinValue
+      )
+      {
+        Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' min value '{stat.MinValue}' is greater than its max value '{stat.MaxValue}'");
+        // swap them
+        (stat.MaxValue, stat.MinValue) = (stat.MinValue, stat.MaxValue);
+      }
+
+      if (!hasDefaultValue) // manually set it if none was provided
+      {
+        stat.DefaultValue = stat.MinValue;
       }
 
       {
