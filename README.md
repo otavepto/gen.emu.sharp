@@ -41,7 +41,7 @@ Output will be inside: `./console.gen.emu.cfg/bin/Debug/<DOTNET_VERSION>/`
 `dotnet` allows building a self-contained release binary for any OS, even for ones other than your current OS.
 These binaries are independent on dotnet runtime, so users do not need to install dotnet.
 
-`dotnet` calls this process `publishing` but it has nothing to do with uploading the binaries to and online storage/host, or even using any form of credentials. Just a misleading name for a simple "release build".
+`dotnet` calls this process `publishing` but it has nothing to do with uploading the binaries to an online storage/host, or even using any form of credentials. Just a misleading name for a simple "release build".
 
 The project has publishing profiles set-up and ready for use.
 
