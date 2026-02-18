@@ -230,16 +230,37 @@ public class GseGenerator : IGenerator
       return;
     }
 
+    static double ClampStatValue(double value, double min, double max)
+    {
+      if (double.IsNegativeInfinity(value) || value < min)
+      {
+        return min;
+      }
+      if (double.IsPositiveInfinity(value) || value > max)
+      {
+        return max;
+      }
+      return value;
+    }
+
     var statsList = stats
       .Select(s =>
         new JsonObject
         {
           ["name"] = s.InternalName,
           ["type"] = s.Type.GetEnumAttribute<EnumMemberAttribute, StatType>()?.Value,
-          ["value_default"] = (long)s.DefaultValue,
-          ["value_global"] = (long)s.GlobalTotalValue,
-          ["value_min"] = (long)s.MinValue,
-          ["value_max"] = (long)s.MaxValue,
+          ["value_default"] = StatType.Int == s.Type
+            ? JsonValue.Create((int)ClampStatValue(s.DefaultValue, int.MinValue, int.MaxValue))
+            : JsonValue.Create((float)ClampStatValue(s.DefaultValue, float.MinValue, float.MaxValue)),
+          ["value_min"] = StatType.Int == s.Type
+            ? JsonValue.Create((int)ClampStatValue(s.MinValue, int.MinValue, int.MaxValue))
+            : JsonValue.Create((float)ClampStatValue(s.MinValue, float.MinValue, float.MaxValue)),
+          ["value_max"] = StatType.Int == s.Type
+            ? JsonValue.Create((int)ClampStatValue(s.MaxValue, int.MinValue, int.MaxValue))
+            : JsonValue.Create((float)ClampStatValue(s.MaxValue, float.MinValue, float.MaxValue)),
+          ["value_global"] = StatType.Int == s.Type // the steam API functions use int64 and double for this prop
+            ? JsonValue.Create((long)ClampStatValue(s.GlobalTotalValue, long.MinValue, long.MaxValue))
+            : JsonValue.Create((double)ClampStatValue(s.GlobalTotalValue, double.MinValue, double.MaxValue)),
           ["value_will_increase_only"] = s.IsValueIncreasesOnly,
           ["aggregated"] = s.IsAggregated,
           ["max_changes_per_update"] = s.MaxChangesPerUpdate,
