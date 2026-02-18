@@ -229,14 +229,31 @@ public class GseGenerator : IGenerator
       return;
     }
 
+    static double ClampStatValue(double value, double min, double max)
+    {
+      if (double.IsNegativeInfinity(value) || value < min)
+      {
+        return min;
+      }
+      if (double.IsPositiveInfinity(value) || value > max)
+      {
+        return max;
+      }
+      return value;
+    }
+
     var statsList = stats
       .Select(s =>
         new JsonObject
         {
           ["name"] = s.InternalName,
           ["type"] = s.Type.GetEnumAttribute<EnumMemberAttribute, StatType>()?.Value,
-          ["default"] = s.DefaultValue.ToString(),
-          ["global"] = s.GlobalTotalValue.ToString(),
+          ["default"] = StatType.Int == s.Type
+            ? ((int)ClampStatValue(s.DefaultValue, int.MinValue, int.MaxValue)).ToString(CultureInfo.InvariantCulture)
+            : ((float)ClampStatValue(s.DefaultValue, float.MinValue, float.MaxValue)).ToString(CultureInfo.InvariantCulture),
+          ["global"] = StatType.Int == s.Type // the steam API functions use int64 and double for this prop
+            ? ((long)ClampStatValue(s.GlobalTotalValue, long.MinValue, long.MaxValue)).ToString(CultureInfo.InvariantCulture)
+            : ((double)ClampStatValue(s.GlobalTotalValue, double.MinValue, double.MaxValue)).ToString(CultureInfo.InvariantCulture),
         }
       )
       .ToList();
@@ -292,7 +309,7 @@ public class GseGenerator : IGenerator
       .ToList();
     if (branches.Count == 0)
     {
-      Log.Instance.Write(Log.Kind.Debug, $"no branches found, adding 'public' as a branch");
+      Log.Instance.Write(Log.Kind.Debug, $"no branches found, adding a dummy 'public' branch");
       branches.Add(new JsonObject
       {
         ["name"] = "public",
@@ -1158,7 +1175,24 @@ public class GseGenerator : IGenerator
       };
       if (ach.ProgressDetails is not null)
       {
-        obj["progress"] = ach.ProgressDetails.DeepClone();
+        var progressJsonNode = ach.ProgressDetails.DeepClone();
+        if (progressJsonNode.GetValueKind() == JsonValueKind.Object)
+        {
+          var progressObj = progressJsonNode.AsObject();
+          if (progressObj.TryGetPropertyValue("min_val", out var minValJsonNode))
+          {
+            progressObj["min_val"] = minValJsonNode?.ToString();
+          }
+          if (progressObj.TryGetPropertyValue("max_val", out var maxValJsonNode))
+          {
+            progressObj["max_val"] = maxValJsonNode?.ToString();
+          }
+        }
+        else
+        {
+          Log.Instance.Write(Log.Kind.Error, $"achievement '{ach.InternalName}' progress details is found, but it's not a JSON object");
+        }
+        obj["progress"] = progressJsonNode;
       }
 
       achs.Add(obj);
@@ -1167,7 +1201,7 @@ public class GseGenerator : IGenerator
     Directory.CreateDirectory(settingsFolder);
     Utils.WriteJson(achs, Path.Combine(settingsFolder, "achievements.json"));
 
-    if (needDefaultIconUnlocked )
+    if (needDefaultIconUnlocked)
     {
       Log.Instance.Write(Log.Kind.Debug, $"one of the achievements is missing unlocked icon, adding default one");
       Directory.CreateDirectory(achievementsImagesFolder);

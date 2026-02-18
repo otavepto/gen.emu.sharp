@@ -341,9 +341,19 @@ public static class Utils
 
   public static double ToNumSafe(this JsonNode? obj)
   {
+    if (TryConvertToNum(obj, out var num))
+    {
+      return num;
+    }
+    return 0;
+  }
+
+  public static bool TryConvertToNum(this JsonNode? obj, out double num)
+  {
     if (obj is null)
     {
-      return 0;
+      num = double.NaN;
+      return false;
     }
 
     switch (obj.GetValueKind())
@@ -351,16 +361,29 @@ public static class Utils
       case JsonValueKind.String:
       case JsonValueKind.Number:
         {
-          if (double.TryParse(obj.ToString() ?? string.Empty, CultureInfo.InvariantCulture, out var num) && !double.IsNaN(num))
+          if (
+            double.TryParse(obj.ToString() ?? string.Empty, CultureInfo.InvariantCulture, out num)
+            && !double.IsNaN(num)
+          )
           {
-            return num;
+            return true;
           }
         }
         break;
-      case JsonValueKind.True: return 1;
+      case JsonValueKind.True:
+        {
+          num = 1;
+          return true;
+        }
+      case JsonValueKind.False:
+        {
+          num = 0;
+          return true;
+        }
     }
 
-    return 0;
+    num = double.NaN;
+    return false;
   }
 
   public static string SanitizeFilename(string filename)
