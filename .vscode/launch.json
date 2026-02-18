@@ -14,8 +14,8 @@
             "args": [
                 "-v", "--icons", "--imgs", "--scrn", "--thumbs", "--vid", "--invicons", "--inviconslarge", "--nonet",
                 "420", "480", "730", "270880", "271590", "282800", "1091500", "1702330", "2668510",
-                // --- weird stats values
                 "2069250",
+                // --- weird stats values
                 "1951780",
                 "1520330",
                 "412050",
