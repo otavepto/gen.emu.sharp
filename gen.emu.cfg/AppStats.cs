@@ -414,7 +414,6 @@ public class AppStats
       }
 
       {
-        // fixup default value, <= max and >= min
         var maxProp = statObj.GetKeyIgnoreCase("max");
         if (maxProp is not null)
         {
@@ -425,9 +424,9 @@ public class AppStats
           }
           stat.MaxValue = maxValue;
         }
-        else if (stat.MaxChangesPerUpdate > 0) // appid 381750 stat "NumRacesTOTAL" defines "min" prop and "maxchange", but not "max"
+        else // we don't know the max so assume infinity
         {
-          stat.MaxValue = stat.MinValue + stat.MaxChangesPerUpdate;
+          stat.MaxValue = double.PositiveInfinity;
         }
       }
 
