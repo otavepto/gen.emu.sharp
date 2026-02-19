@@ -183,6 +183,14 @@ public class AppStats
               return true;
             }
           }
+          else if (statValStr.Length >= 3 && statValStr[statValStr.Length - 1] == 'F') // appid 1381640 ("0.2f")
+          {
+            if (JsonValue.Create(statValStr.Substring(0, statValStr.Length - 1)).TryConvertToNum(out val))
+            {
+              val *= mathSign;
+              return true;
+            }
+          }
         }
         break;
     }
