@@ -439,9 +439,7 @@ public class AppStats
         stat.MaxValue < stat.MinValue
       )
       {
-        Log.Instance.Write(Log.Kind.Error, $"Stat '{name}' min value '{stat.MinValue}' is greater than its max value '{stat.MaxValue}'");
-        // swap them
-        (stat.MaxValue, stat.MinValue) = (stat.MinValue, stat.MaxValue);
+        Log.Instance.Write(Log.Kind.Debug, $"Stat '{name}' min value '{stat.MinValue}' is greater than its max value '{stat.MaxValue}'");
       }
 
       if (!hasDefaultValue) // manually set it if none was provided
