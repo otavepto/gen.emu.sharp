@@ -424,7 +424,7 @@ public class GseGenerator : IGenerator
     // add overrides
     foreach (var item in appInfoModel.UserFilesystem.SaveFileOverrides)
     {
-      if (item.Platform.Equals(platform, StringComparison.OrdinalIgnoreCase))
+      if (platform.Equals(item.Platform, StringComparison.OrdinalIgnoreCase))
       {
         ufs.SaveFileOverrides.Add(item);
       }
@@ -444,11 +444,12 @@ public class GseGenerator : IGenerator
     {
       foreach (var ufsOverride in ufs.SaveFileOverrides)
       {
-        string newPath = $"{{::{ufsOverride.RootNew.Trim()}::}}";
+        // start by "ufs_override.root_new"/"ufs_override.path_after_root_new"
+        string overrideBasePath = $"{{::{ufsOverride.RootNew.Trim()}::}}";
         string pathAfterRootNew = SanitizePath(ufsOverride.PathAfterRootNew.Replace("\\", "/", StringComparison.Ordinal));
         if (!string.IsNullOrEmpty(pathAfterRootNew))
         {
-          newPath += $"/{pathAfterRootNew}";
+          overrideBasePath += $"/{pathAfterRootNew}";
         }
 
         var saveFilesToOverride = ufs.SaveFiles
@@ -486,6 +487,7 @@ public class GseGenerator : IGenerator
           }
 
           pathAfterRootOriginal = SanitizePath(pathAfterRootOriginal);
+          string newPath = overrideBasePath;
           if (!string.IsNullOrEmpty(pathAfterRootOriginal))
           {
             newPath += $"/{pathAfterRootOriginal}";
