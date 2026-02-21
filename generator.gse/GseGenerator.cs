@@ -457,10 +457,11 @@ public class GseGenerator : IGenerator
         {
           // don't sanitize "save_file.path_after_root" yet, we need to find and replace substrings
           string pathAfterRootOriginal = saveFile.PathAfterRoot.Replace("\\", "/", StringComparison.Ordinal);
-          foreach (var (Find, Replace) in ufsOverride.PathsToTransform)
+          // replace all target ("find") patterns in the original path after root
+          foreach (var pathToTransorm in ufsOverride.PathsToTransform)
           {
-            string find = Find.Replace("\\", "/", StringComparison.Ordinal);
-            string replace = Replace.Replace("\\", "/", StringComparison.Ordinal);
+            string find = pathToTransorm.Find.Replace("\\", "/", StringComparison.Ordinal);
+            string replace = pathToTransorm.Replace.Replace("\\", "/", StringComparison.Ordinal);
             if (!string.IsNullOrEmpty(find) && !string.IsNullOrEmpty(pathAfterRootOriginal))
             {
               // StringComparison.InvariantCultureIgnoreCase might produce unexpected results here
