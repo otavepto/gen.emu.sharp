@@ -95,8 +95,14 @@ public class UserFileSystem
       var pathsToTransform = item
         .GetKeyIgnoreCase("pathtransforms")
         .ToObjSafe()
-        .Select(kv => kv.Value.ToObjSafe())
-        .Select(obj => (Find: obj.GetKeyIgnoreCase("find").ToStringSafe(), Replace: obj.GetKeyIgnoreCase("replace").ToStringSafe()));
+        .Select(kv => kv.Value.ToObjSafe()) // 1: {...} => we want the value object
+        .Select(obj =>
+          new SavePathTransformModel
+          {
+            Find = obj.GetKeyIgnoreCase("find").ToStringSafe(),
+            Replace = obj.GetKeyIgnoreCase("replace").ToStringSafe(),
+          }
+        );
 
       var newModel = new SaveFileOverrideModel
       {
