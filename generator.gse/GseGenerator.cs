@@ -353,6 +353,12 @@ public class GseGenerator : IGenerator
 
   void SaveUfs(string platform, string iniSectionSuffix)
   {
+    // this is a path normalization/canonicalization function
+    // remove trailing '/' 
+    // remove trailing "/." (pointing at current dir)
+    // remove leading "/." (pointing at current dir)
+    // remove any "/." in between
+    // and other path sanitization operations
     string SanitizePath(string path)
     {
       // appid 292930 sets "path=/"
@@ -403,7 +409,7 @@ public class GseGenerator : IGenerator
     (List<SaveFileModel> SaveFiles, List<SaveFileOverrideModel> SaveFileOverrides) ufs =
       new(new List<SaveFileModel>(), new List<SaveFileOverrideModel>());
 
-    // add base save files
+    // add base save files, only the ones matching the target platform
     foreach (var item in appInfoModel.UserFilesystem.SaveFiles)
     {
       if (item.Platforms.Count == 0) // all platforms
@@ -421,7 +427,7 @@ public class GseGenerator : IGenerator
       }
     }
 
-    // add overrides
+    // add overrides, only the ones matching the target platform
     foreach (var item in appInfoModel.UserFilesystem.SaveFileOverrides)
     {
       if (platform.Equals(item.Platform, StringComparison.OrdinalIgnoreCase))
@@ -432,9 +438,9 @@ public class GseGenerator : IGenerator
 
     // format the root identifiers like this:
     // {SteamCloudDocuments} >> {::SteamCloudDocuments::}
-    // this char ':' is illegal on all OSes and fails to create a dir
-    // if any idetifier was not substituted
-    // some games like appid 388880 have broken config, the emu can
+    // this char ':' is unused on all OSes and mostly used as a separator
+    // some games like appid 388880 have broken config,
+    // so if any idetifier was not substituted, the emu can
     // then easily detect that by looking for the pattern "::" or "{::"
     // and decide the appropriate action to take
 
