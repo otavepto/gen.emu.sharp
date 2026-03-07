@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using common.utils;
 using common.utils.Logging;
 using gen.emu.shared;
@@ -1133,6 +1133,21 @@ public class GseGenerator : IGenerator
     Utils.WriteJson(defaultInvItems, Path.Combine(settingsFolder, "default_items.json"));
   }
 
+  private static JsonNode EnsureStringsNode(JsonNode node)
+  {
+      if (node is JsonObject jsonObject)
+      {
+          var result = new JsonObject();
+          foreach (var (key, value) in jsonObject)
+          {
+              result[key] = value?.ToString();
+          }
+          return result;
+      }
+
+      return JsonValue.Create(node.ToString())!;
+  }
+
   public Task SaveAchievements(IReadOnlyList<AchievementModel> achsModels)
   {
     if (achsModels.Count == 0)
@@ -1178,8 +1193,8 @@ public class GseGenerator : IGenerator
         ["icon_gray"] =
           Path.Combine(ACHIEVEMENT_IMAGE_FOLDER_NAME, ACHIEVEMENT_IMAGE_LOCKED_FOLDER_NAME, iconLockedName).Replace('\\', '/'),
 
-        ["displayName"] = ach.FriendlyNameTranslations.DeepClone(),
-        ["description"] = ach.DescriptionTranslations.DeepClone(),
+        ["displayName"] = EnsureStringsNode(ach.FriendlyNameTranslations),
+        ["description"] = EnsureStringsNode(ach.DescriptionTranslations),
 
       };
       if (ach.ProgressDetails is not null)
