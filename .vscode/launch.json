@@ -39,6 +39,8 @@
                 "1402320",
                 "381750",
                 "3811350",
+                // --- needs new url for ach images
+                "1488490",
                 // ---
             ],
             "cwd": "${workspaceFolder}/console.gen.emu.cfg",
